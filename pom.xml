@@ -29,180 +29,180 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
   http://maven.apache.org/xsd/maven-4.0.0.xsd">
       
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
   
-    <parent>
-        <artifactId>connid</artifactId>
-        <groupId>org.connid</groupId>
-        <version>1.3.2</version>
-    </parent>
+  <parent>
+    <artifactId>connid</artifactId>
+    <groupId>org.connid</groupId>
+    <version>1.3.2</version>
+  </parent>
     
     
-    <groupId>org.connid.bundles</groupId>
-    <artifactId>org.connid.bundles.unix</artifactId>
-    <version>0.1-SNAPSHOT</version>
+  <groupId>org.connid.bundles</groupId>
+  <artifactId>org.connid.bundles.unix</artifactId>
+  <version>0.1-SNAPSHOT</version>
     
-    <packaging>jar</packaging>
+  <packaging>jar</packaging>
     
-    <name>ConnId Bundles: Unix</name>
+  <name>ConnId Bundles: UNIX</name>
   
-    <scm>
-        <connection>scm:svn:http://connid.googlecode.com/svn/bundles/unix/trunk/</connection>
-        <developerConnection>scm:svn:https://connid.googlecode.com/svn/bundles/unix/trunk/</developerConnection>
-        <url>http://connid.googlecode.com/svn/bundles/unix/trunk/</url>
-    </scm>
+  <scm>
+    <connection>scm:git:git@github.com:Tirasa/ConnIdUNIXBundle.git</connection>
+    <url>scm:git:git@github.com:Tirasa/ConnIdUNIXBundle.git</url>
+    <developerConnection>scm:git:git@github.com:Tirasa/ConnIdUNIXBundlee.git</developerConnection>
+  </scm>
 
-    <properties>
-        <base.version>1.3.2</base.version>
-        <sshtools.version>0.2.9</sshtools.version>
+  <properties>
+    <base.version>1.3.2</base.version>
+    <sshtools.version>0.2.9</sshtools.version>
         
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.connid</groupId>
-            <artifactId>framework</artifactId>
-            <version>${base.version}</version>
-            <scope>compile</scope>
-        </dependency>
+  <dependencies>
+    <dependency>
+      <groupId>org.connid</groupId>
+      <artifactId>framework</artifactId>
+      <version>${base.version}</version>
+      <scope>compile</scope>
+    </dependency>
 
-        <dependency>
-            <groupId>org.connid</groupId>
-            <artifactId>framework-internal</artifactId>
-            <version>${base.version}</version>
-            <scope>runtime</scope>
-        </dependency>
+    <dependency>
+      <groupId>org.connid</groupId>
+      <artifactId>framework-internal</artifactId>
+      <version>${base.version}</version>
+      <scope>runtime</scope>
+    </dependency>
         
-        <!-- SSH -->
-        <dependency>
-            <groupId>sshtools</groupId>
-            <artifactId>j2ssh-core</artifactId>
-            <version>${sshtools.version}</version>
-        </dependency>
+    <!-- SSH -->
+    <dependency>
+      <groupId>sshtools</groupId>
+      <artifactId>j2ssh-core</artifactId>
+      <version>${sshtools.version}</version>
+    </dependency>
             
-        <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-        </dependency>
-        <!-- SSH -->
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+    </dependency>
+    <!-- SSH -->
         
-        <!-- TEST -->
-        <dependency>
-            <groupId>org.connid</groupId>
-            <artifactId>test-common</artifactId>
-            <version>${base.version}</version>
-            <scope>test</scope>
-        </dependency>
+    <!-- TEST -->
+    <dependency>
+      <groupId>org.connid</groupId>
+      <artifactId>test-common</artifactId>
+      <version>${base.version}</version>
+      <scope>test</scope>
+    </dependency>
         
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!-- TEST -->
-    </dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- TEST -->
+  </dependencies>
     
-    <profiles>
-        <profile>
-            <id>real</id>
-            <build>
-                <plugins>            
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <inherited>true</inherited>
-                        <configuration>
-                            <includes>
-                                <include>**/*Test.java</include>
-                            </includes>
-                        </configuration>
-                    </plugin>
-                </plugins>
-                
-                <defaultGoal>clean verify</defaultGoal>
-                <testResources>
-                    <testResource>
-                        <directory>src/test/resources</directory>
-                        <filtering>true</filtering>
-                        <includes>
-                            <include>unix.properties</include>
-                        </includes>
-                    </testResource>
-                </testResources>
-            </build>
-        </profile>
-    </profiles>
-    
-    <build>
-        
+  <profiles>
+    <profile>
+      <id>real</id>
+      <build>
         <plugins>            
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <inherited>true</inherited>
-                <configuration>
-                    <includes>
-                        <include>**/*Tests.java</include>
-                    </includes>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <configuration>
-
-                    <appendAssemblyId>false</appendAssemblyId>
-
-                    <descriptors>
-                        <descriptor>src/assemble/connector.xml</descriptor>
-                    </descriptors>
-
-                    <archive>
-                        <index>true</index>
-                        <manifestEntries>
-
-                            <ConnectorBundle-FrameworkVersion>
-                                ${base.version}
-                            </ConnectorBundle-FrameworkVersion>
-
-                            <ConnectorBundle-Name>
-                                ${project.artifactId}
-                            </ConnectorBundle-Name>
-
-                            <ConnectorBundle-Version>
-                                ${project.version}
-                            </ConnectorBundle-Version>
-
-                        </manifestEntries>
-                    </archive>
-                    
-                </configuration>
-                
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.0</version>
-                <configuration>
-                    <tagBase>https://connid.googlecode.com/svn/bundles/unix/tags</tagBase>
-                </configuration>
-            </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <inherited>true</inherited>
+            <configuration>
+              <includes>
+                <include>**/*Test.java</include>
+              </includes>
+            </configuration>
+          </plugin>
         </plugins>
-        
+                
+        <defaultGoal>clean verify</defaultGoal>
         <testResources>
-            <testResource>
-                <directory>src/test/resources</directory>
-            </testResource>
+          <testResource>
+            <directory>src/test/resources</directory>
+            <filtering>true</filtering>
+            <includes>
+              <include>unix.properties</include>
+            </includes>
+          </testResource>
         </testResources>
-    </build>
+      </build>
+    </profile>
+  </profiles>
+    
+  <build>
+        
+    <plugins>            
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <inherited>true</inherited>
+        <configuration>
+          <includes>
+            <include>**/*Tests.java</include>
+          </includes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+
+          <appendAssemblyId>false</appendAssemblyId>
+
+          <descriptors>
+            <descriptor>src/assemble/connector.xml</descriptor>
+          </descriptors>
+
+          <archive>
+            <index>true</index>
+            <manifestEntries>
+
+              <ConnectorBundle-FrameworkVersion>
+                ${base.version}
+              </ConnectorBundle-FrameworkVersion>
+
+              <ConnectorBundle-Name>
+                ${project.artifactId}
+              </ConnectorBundle-Name>
+
+              <ConnectorBundle-Version>
+                ${project.version}
+              </ConnectorBundle-Version>
+
+            </manifestEntries>
+          </archive>
+                    
+        </configuration>
+                
+        <executions>
+          <execution>
+            <id>make-assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.0</version>
+        <configuration>
+          <tagBase>https://connid.googlecode.com/svn/bundles/unix/tags</tagBase>
+        </configuration>
+      </plugin>
+    </plugins>
+        
+    <testResources>
+      <testResource>
+        <directory>src/test/resources</directory>
+      </testResource>
+    </testResources>
+  </build>
 </project>
