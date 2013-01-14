@@ -23,69 +23,83 @@
  */
 package org.connid.bundles.unix.sshmanagement;
 
-import org.connid.bundles.unix.commands.UserDel;
-import org.connid.bundles.unix.commands.Sudo;
-import org.connid.bundles.unix.commands.GroupDel;
-import org.connid.bundles.unix.commands.Passwd;
-import org.connid.bundles.unix.commands.UserAdd;
-import org.connid.bundles.unix.commands.GroupMod;
-import org.connid.bundles.unix.commands.GroupAdd;
-import org.connid.bundles.unix.commands.UserMod;
-import org.connid.bundles.unix.commands.General;
-import com.sshtools.j2ssh.SshClient;
-import com.sshtools.j2ssh.authentication.AuthenticationProtocolState;
-import com.sshtools.j2ssh.authentication.PasswordAuthenticationClient;
-import com.sshtools.j2ssh.configuration.SshConnectionProperties;
-import com.sshtools.j2ssh.connection.ChannelState;
-import com.sshtools.j2ssh.session.SessionChannelClient;
-import com.sshtools.j2ssh.transport.IgnoreHostKeyVerification;
-import com.sshtools.j2ssh.util.InvalidStateException;
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import org.connid.bundles.unix.UnixConfiguration;
+import org.connid.bundles.unix.commands.DelUser;
+import org.connid.bundles.unix.commands.General;
+import org.connid.bundles.unix.commands.GroupAdd;
+import org.connid.bundles.unix.commands.GroupDel;
+import org.connid.bundles.unix.commands.GroupMod;
+import org.connid.bundles.unix.commands.Sudo;
+import org.connid.bundles.unix.commands.UserAdd;
+import org.connid.bundles.unix.commands.UserMod;
 import org.connid.bundles.unix.utilities.DefaultProperties;
 import org.connid.bundles.unix.utilities.Utilities;
-import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 
 public class SSHClient {
 
     private static final Log LOG = Log.getLog(SSHClient.class);
-    private SshConnectionProperties properties = new SshConnectionProperties();
-    private UnixConfiguration unixConfiguration = null;
-    private String username;
-    private String password;
-    private SshClient sshClient = null;
 
-    public SSHClient(final UnixConfiguration unixConfiguration) {
+    Session session = null;
+
+    private UnixConfiguration unixConfiguration = null;
+
+    private String username;
+
+    private String password;
+
+    private JSch sshClient = null;
+
+    public SSHClient(final UnixConfiguration unixConfiguration) throws IOException {
         this.unixConfiguration = unixConfiguration;
-        properties.setHost(unixConfiguration.getHostname());
-        properties.setPort(unixConfiguration.getPort());
+        SshClientInit();
         this.username = unixConfiguration.getAdmin();
         this.password = Utilities.getPlainPassword(
                 unixConfiguration.getPassword());
-        sshClient = new SshClient();
-        sshClient.setSocketTimeout(DefaultProperties.SSH_SOCKET_TIMEOUT);
     }
 
-    public final SessionChannelClient getSession() throws IOException {
-        sshClient.connect(properties, new IgnoreHostKeyVerification());
-        int status =
-                sshClient.authenticate(getPwdAuthClient(username, password));
-        if (status != AuthenticationProtocolState.COMPLETE) {
-            throw new IOException();
-        }
-        return sshClient.openSessionChannel();
+    private void SshClientInit() throws IOException {
+        sshClient = new JSch();
     }
 
-    public final String userExists(final String username)
-            throws IOException, InvalidStateException, InterruptedException {
-        String output = "";
-        SessionChannelClient session = getSession();
+    private InputStream exec(String command) throws JSchException, IOException {
+        LOG.info("Executing command: " + command);
+        Channel channel = getChannelExec();
+        ((ChannelExec) channel).setCommand(command);
+        channel.setInputStream(null);
+        ((ChannelExec) channel).setErrStream(System.err);
+
+        InputStream in = channel.getInputStream();
+        channel.connect();
+        return in;
+    }
+
+    public final Channel getChannelExec() throws JSchException {
+
+        session = sshClient.getSession(username, unixConfiguration.getHostname(), unixConfiguration.getPort());
+        session.setPassword(password);
+        Properties config = new Properties();
+        config.put("StrictHostKeyChecking", "no");
+        session.setConfig(config);
+        session.connect(DefaultProperties.SSH_SOCKET_TIMEOUT);
+        LOG.info("Connected to host " + unixConfiguration.getHostname());
+
+        return session.openChannel("exec");
+    }
+
+    public final String userExists(final String username) throws JSchException, IOException {
         StringBuilder commandToExecute = new StringBuilder();
         if (!unixConfiguration.isRoot()) {
             Sudo sudoCommand =
@@ -94,20 +108,11 @@ public class SSHClient {
         }
         commandToExecute.append(
                 General.searchUserIntoPasswdFile(username));
-        if (session.executeCommand(commandToExecute.toString())) {
-            output = getOutput(session);
-            session.getState().waitForState(ChannelState.CHANNEL_CLOSED);
-        } else {
-            LOG.error("Error during password encrypt");
-        }
-        sshClient.disconnect();
-        return output;
+
+        return getOutput(exec(commandToExecute.toString()));
     }
 
-    public final String searchUser(final String username)
-            throws IOException, InvalidStateException, InterruptedException {
-        String output = "";
-        SessionChannelClient session = getSession();
+    public final String searchUser(final String username) throws JSchException, IOException {
         StringBuilder commandToExecute = new StringBuilder();
         if (!unixConfiguration.isRoot()) {
             Sudo sudoCommand =
@@ -116,19 +121,10 @@ public class SSHClient {
         }
         commandToExecute.append(
                 General.searchUserIntoPasswdFile(username));
-        if (session.executeCommand(commandToExecute.toString())) {
-            output = getOutput(session);
-            session.getState().waitForState(ChannelState.CHANNEL_CLOSED);
-        } else {
-            LOG.error("Error during password encrypt");
-        }
-        sshClient.disconnect();
-        return output;
+        return getOutput(exec(commandToExecute.toString()));
     }
 
-    public final List<String> searchAllUser()
-            throws IOException, InvalidStateException, InterruptedException {
-        SessionChannelClient session = getSession();
+    public final List<String> searchAllUser() throws JSchException, IOException {
         StringBuilder commandToExecute = new StringBuilder();
         if (!unixConfiguration.isRoot()) {
             Sudo sudoCommand =
@@ -137,21 +133,10 @@ public class SSHClient {
         }
         commandToExecute.append(
                 General.catPasswdFile());
-        List<String> output = new ArrayList<String>();
-        if (session.executeCommand(commandToExecute.toString())) {
-            output = getPasswdFileOutput(session);
-            session.getState().waitForState(ChannelState.CHANNEL_CLOSED);
-        } else {
-            LOG.error("Error during password encrypt");
-        }
-        sshClient.disconnect();
-        return output;
+        return getPasswdFileOutput(exec(commandToExecute.toString()));
     }
 
-    public String groupExists(final String groupname)
-            throws IOException, InvalidStateException, InterruptedException {
-        String output = "";
-        SessionChannelClient session = getSession();
+    public String groupExists(final String groupname) throws JSchException, IOException {
         StringBuilder commandToExecute = new StringBuilder();
         if (!unixConfiguration.isRoot()) {
             Sudo sudoCommand =
@@ -160,20 +145,10 @@ public class SSHClient {
         }
         commandToExecute.append(
                 General.searchGroupIntoGroupFile(groupname));
-        if (session.executeCommand(commandToExecute.toString())) {
-            output = getOutput(session);
-            session.getState().waitForState(ChannelState.CHANNEL_CLOSED);
-        } else {
-            LOG.error("Error during password encrypt");
-        }
-        sshClient.disconnect();
-        return output;
+        return getOutput(exec(commandToExecute.toString()));
     }
 
-    public String userStatus(final String username)
-            throws IOException, InvalidStateException, InterruptedException {
-        String output = "";
-        SessionChannelClient session = getSession();
+    public String userStatus(final String username) throws JSchException, IOException {
         StringBuilder commandToExecute = new StringBuilder();
         if (!unixConfiguration.isRoot()) {
             Sudo sudoCommand =
@@ -182,21 +157,12 @@ public class SSHClient {
         }
         commandToExecute.append(
                 General.searchUserStatusIntoShadowFile(username));
-        if (session.executeCommand(commandToExecute.toString())) {
-            output = getOutput(session);
-            session.getState().waitForState(ChannelState.CHANNEL_CLOSED);
-        } else {
-            LOG.error("Error during password encrypt");
-        }
-        sshClient.disconnect();
-        return output;
+        return getOutput(exec(commandToExecute.toString()));
     }
 
     public final void createUser(final String username, final String password,
             final String comment, final String shell,
-            final String homeDirectory, final boolean status)
-            throws IOException, InvalidStateException, InterruptedException {
-        SessionChannelClient session = getSession();
+            final String homeDirectory, final boolean status) throws JSchException, IOException {
         StringBuilder commandToExecute = new StringBuilder();
         if (!unixConfiguration.isRoot()) {
             Sudo sudoCommand =
@@ -206,15 +172,11 @@ public class SSHClient {
         commandToExecute.append(
                 createUserAddCommand(username, password, comment, shell,
                 homeDirectory));
-        if (session.executeCommand(commandToExecute.toString())) {
-            session.getState().waitForState(ChannelState.CHANNEL_CLOSED);
-        } else {
-            LOG.error("Error during useradd operation");
-        }
+        exec(commandToExecute.toString());
+        session.disconnect();
         if (!status) {
             lockUser(username);
         }
-        sshClient.disconnect();
     }
 
     private String createUserAddCommand(final String username,
@@ -223,33 +185,25 @@ public class SSHClient {
         UserAdd userAddCommand = new UserAdd(
                 unixConfiguration, username, password, comment, shell,
                 homeDirectory);
-        Passwd passwdCommand = new Passwd();
         StringBuilder commandToExecute = new StringBuilder();
         if (!unixConfiguration.isRoot()) {
             Sudo sudoCommand =
                     new Sudo(unixConfiguration.getSudoPassword());
             commandToExecute.append(sudoCommand.sudo()).append("; ");
         }
-        commandToExecute.append(userAddCommand.useradd()).append("; ").append(
-                passwdCommand.setPassword(username, password));
+        commandToExecute.append(userAddCommand.useradd());
         return commandToExecute.toString();
     }
 
-    private void lockUser(final String username)
-            throws InterruptedException, InvalidStateException, IOException {
-        SessionChannelClient session = getSession();
+    private void lockUser(final String username) throws JSchException, IOException {
         UserMod userModCommand = new UserMod();
-        if (session.executeCommand(userModCommand.lockUser(username))) {
-            session.getState().waitForState(ChannelState.CHANNEL_CLOSED);
-        } else {
-            LOG.error("Error during lock user");
-        }
+        exec(userModCommand.lockUser(username));
+        session.disconnect();
     }
 
     public void createGroup(final String groupName)
-            throws IOException, InvalidStateException, InterruptedException {
+            throws IOException, JSchException {
 
-        SessionChannelClient session = getSession();
         GroupAdd groupAddCommand = new GroupAdd(groupName);
         StringBuilder commandToExecute = new StringBuilder();
         if (!unixConfiguration.isRoot()) {
@@ -258,20 +212,14 @@ public class SSHClient {
             commandToExecute.append(sudoCommand.sudo()).append("; ");
         }
         commandToExecute.append(groupAddCommand.groupadd());
-        if (session.executeCommand(commandToExecute.toString())) {
-            session.getState().waitForState(ChannelState.CHANNEL_CLOSED);
-        } else {
-            LOG.error("Error during groupadd operation");
-        }
-        sshClient.disconnect();
+        exec(commandToExecute.toString());
+        session.disconnect();
     }
 
     public final void updateUser(final String actualUsername,
             final String newUserName, final String password,
             final boolean status, final String comment, final String shell,
-            final String homeDirectory) throws IOException,
-            InvalidStateException, InterruptedException {
-        SessionChannelClient session = getSession();
+            final String homeDirectory) throws JSchException, IOException {
         StringBuilder commandToExecute = new StringBuilder();
         if (!unixConfiguration.isRoot()) {
             Sudo sudoCommand =
@@ -281,28 +229,21 @@ public class SSHClient {
         commandToExecute.append(
                 createModCommand(actualUsername, newUserName, password, comment,
                 shell, homeDirectory));
-        if (session.executeCommand(commandToExecute.toString())) {
-            session.getState().waitForState(ChannelState.CHANNEL_CLOSED);
-        } else {
-            LOG.error("Error during usermod operation");
-        }
+        exec(commandToExecute.toString());
+        session.disconnect();
+
         if (status) {
             unlockUser(actualUsername);
         } else {
             lockUser(actualUsername);
         }
-        sshClient.disconnect();
     }
 
     private void unlockUser(String username)
-            throws IOException, InvalidStateException, InterruptedException {
-        SessionChannelClient session = getSession();
+            throws IOException, JSchException {
         UserMod userModCommand = new UserMod();
-        if (session.executeCommand(userModCommand.unlockUser(username))) {
-            session.getState().waitForState(ChannelState.CHANNEL_CLOSED);
-        } else {
-            LOG.error("Error during unlock user");
-        }
+        exec(userModCommand.unlockUser(username));
+        session.disconnect();
     }
 
     private String createModCommand(final String actualUsername,
@@ -313,23 +254,14 @@ public class SSHClient {
                 new UserMod();
         StringBuilder commandToExecute = new StringBuilder();
         commandToExecute.append(userModCommand.userMod(
-                actualUsername, newUserName, comment, shell, homeDirectory));
-        if ((StringUtil.isNotBlank(password))
-                && (StringUtil.isNotEmpty(password))) {
-            Passwd passwdCommand =
-                    new Passwd();
-            commandToExecute.append("; ").append(passwdCommand.setPassword(
-                    newUserName, password));
-        }
+                actualUsername, newUserName, password, comment, shell, homeDirectory));
         return commandToExecute.toString();
     }
 
     public void updateGroup(final String actualGroupName,
-            final String newUserName)
-            throws IOException, InvalidStateException, InterruptedException {
+            final String newUserName) throws JSchException, IOException {
         GroupMod groupModCommand =
                 new GroupMod(actualGroupName, newUserName);
-        SessionChannelClient session = getSession();
         StringBuilder commandToExecute = new StringBuilder();
         if (!unixConfiguration.isRoot()) {
             Sudo sudoCommand =
@@ -337,37 +269,29 @@ public class SSHClient {
             commandToExecute.append(sudoCommand.sudo()).append("; ");
         }
         commandToExecute.append(groupModCommand.groupMod());
-        if (session.executeCommand(commandToExecute.toString())) {
-            session.getState().waitForState(ChannelState.CHANNEL_CLOSED);
-        } else {
-            LOG.error("Error during groupmod operation");
-        }
-        sshClient.disconnect();
+        exec(commandToExecute.toString());
+        session.disconnect();
     }
 
-    public final void deleteUser(final String username)
-            throws IOException, InvalidStateException, InterruptedException {
-        SessionChannelClient session = getSession();
-        UserDel userDelCommand =
-                new UserDel(unixConfiguration, username);
+    public final void deleteUser(final String username) throws JSchException, IOException {
+        DelUser userDelCommand =
+                new DelUser(unixConfiguration, username);
         StringBuilder commandToExecute = new StringBuilder();
         if (!unixConfiguration.isRoot()) {
             Sudo sudoCommand =
                     new Sudo(unixConfiguration.getSudoPassword());
             commandToExecute.append(sudoCommand.sudo()).append("; ");
         }
-        commandToExecute.append(userDelCommand.userdel());
-        if (session.executeCommand(commandToExecute.toString())) {
-            session.getState().waitForState(ChannelState.CHANNEL_CLOSED);
-        } else {
-            LOG.error("Error during deleted operation");
-        }
-        sshClient.disconnect();
+        commandToExecute.append(userDelCommand.deluser());
+//        exec(commandToExecute.toString());
+//        session.disconnect();
+        exec("sed -i -e \'/" + username + "/d\' /etc/shadow && sed -i -e \'/" + username
+                + "/d\' /etc/passwd && sed -i -e \'/" + username + "/d\' /etc/group && rm -rf " + unixConfiguration.
+                getBaseHomeDirectory() + "/" + username);
+        session.disconnect();
     }
 
-    public void deleteGroup(final String groupName)
-            throws IOException, InvalidStateException, InterruptedException {
-        SessionChannelClient session = getSession();
+    public void deleteGroup(final String groupName) throws JSchException, IOException {
         GroupDel groupDelCommand = new GroupDel(groupName);
         StringBuilder commandToExecute = new StringBuilder();
         if (!unixConfiguration.isRoot()) {
@@ -376,54 +300,42 @@ public class SSHClient {
             commandToExecute.append(sudoCommand.sudo()).append("; ");
         }
         commandToExecute.append(groupDelCommand.groupDel());
-        if (session.executeCommand(commandToExecute.toString())) {
-            session.getState().waitForState(ChannelState.CHANNEL_CLOSED);
-        } else {
-            LOG.error("Error during deleted operation");
-        }
-        sshClient.disconnect();
+        exec(commandToExecute.toString());
+        session.disconnect();
     }
 
-    public final void authenticate(final String username, final String password)
-            throws UnknownHostException, IOException {
-        sshClient.connect(properties, new IgnoreHostKeyVerification());
-        int status =
-                sshClient.authenticate(getPwdAuthClient(username, password));
-        if (status != AuthenticationProtocolState.COMPLETE) {
-            throw new IOException();
-        }
-        sshClient.disconnect();
+    public final void authenticate(final String username, final String password) throws JSchException {
+        Session authSession = sshClient.getSession(username, unixConfiguration.getHostname(), unixConfiguration.
+                getPort());
+        authSession.setPassword(password);
+        Properties config = new Properties();
+        config.put("StrictHostKeyChecking", "no");
+        authSession.setConfig(config);
+        authSession.connect(DefaultProperties.SSH_SOCKET_TIMEOUT);
+        authSession.disconnect();
     }
 
-    private String getOutput(final SessionChannelClient session)
-            throws IOException {
-        String line = "";
+    private String getOutput(final InputStream inputStream) throws IOException {
+        String line;
         BufferedReader br = new BufferedReader(
-                new InputStreamReader(session.getInputStream()));
+                new InputStreamReader(inputStream));
         StringBuilder buffer = new StringBuilder();
         while ((line = br.readLine()) != null) {
             buffer.append(line).append("\n");
         }
+        session.disconnect();
         return buffer.toString();
     }
 
-    private List<String> getPasswdFileOutput(final SessionChannelClient session)
-            throws IOException {
-        String line = "";
+    private List<String> getPasswdFileOutput(final InputStream inputStream) throws IOException {
+        String line;
         BufferedReader br = new BufferedReader(
-                new InputStreamReader(session.getInputStream()));
+                new InputStreamReader(inputStream));
         List<String> passwdRows = new ArrayList<String>();
         while ((line = br.readLine()) != null) {
             passwdRows.add(line);
         }
+        session.disconnect();
         return passwdRows;
-    }
-
-    private PasswordAuthenticationClient getPwdAuthClient(
-            final String username, final String password) {
-        PasswordAuthenticationClient pwd = new PasswordAuthenticationClient();
-        pwd.setUsername(username);
-        pwd.setPassword(password);
-        return pwd;
     }
 }

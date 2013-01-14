@@ -23,9 +23,8 @@
  */
 package org.connid.bundles.unix.methods;
 
-import com.sshtools.j2ssh.util.InvalidStateException;
+import com.jcraft.jsch.JSchException;
 import java.io.IOException;
-import java.util.List;
 import java.util.Set;
 import org.connid.bundles.unix.UnixConfiguration;
 import org.connid.bundles.unix.UnixConnection;
@@ -66,8 +65,7 @@ public class UnixCreate {
         }
     }
 
-    private Uid doCreate() throws IOException,
-            InvalidStateException, InterruptedException {
+    private Uid doCreate() throws IOException, InterruptedException, JSchException {
 
         if (!objectClass.equals(ObjectClass.ACCOUNT)
                 && (!objectClass.equals(ObjectClass.GROUP))) {

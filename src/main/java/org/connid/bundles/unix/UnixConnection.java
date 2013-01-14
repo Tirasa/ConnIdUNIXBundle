@@ -23,15 +23,15 @@
  */
 package org.connid.bundles.unix;
 
-import com.sshtools.j2ssh.util.InvalidStateException;
+import com.jcraft.jsch.JSchException;
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.List;
 import org.connid.bundles.unix.sshmanagement.SSHClient;
 
 public class UnixConnection {
 
     private static UnixConfiguration unixConfiguration = null;
+
     SSHClient sshc = null;
 
     private UnixConnection(final UnixConfiguration unixConfiguration)
@@ -49,73 +49,61 @@ public class UnixConnection {
         return unixConfiguration;
     }
 
-    public String userExists(final String username)
-            throws IOException, InvalidStateException, InterruptedException {
+    public String userExists(final String username) throws JSchException, IOException {
         return sshc.userExists(username);
     }
 
-    public String searchUser(final String username)
-            throws IOException, InvalidStateException, InterruptedException {
+    public String searchUser(final String username) throws JSchException, IOException {
         return sshc.searchUser(username);
     }
 
-    public List<String> searchAllUser()
-            throws IOException, InvalidStateException, InterruptedException {
+    public List<String> searchAllUser() throws JSchException, IOException {
         return sshc.searchAllUser();
     }
 
-    public String userStatus(final String username)
-            throws IOException, InvalidStateException, InterruptedException {
+    public String userStatus(final String username) throws JSchException, IOException {
         return sshc.userStatus(username);
     }
 
-    public String groupExists(String groupname)
-            throws IOException, InvalidStateException, InterruptedException {
+    public String groupExists(String groupname) throws JSchException, IOException {
         return sshc.groupExists(groupname);
     }
 
-    public void testConnection() throws IOException {
-        sshc.getSession();
+    public void testConnection() throws JSchException {
+        sshc.getChannelExec();
     }
 
     public void createUser(final String uidstring,
             final String password, final String comment, final String shell,
-            final String homeDirectory, final boolean status)
-            throws IOException, InvalidStateException, InterruptedException {
+            final String homeDirectory, final boolean status) throws JSchException, IOException {
         sshc.createUser(uidstring, password, comment, shell,
                 homeDirectory, status);
     }
 
-    public void createGroup(String groupName)
-            throws IOException, InvalidStateException, InterruptedException {
+    public void createGroup(String groupName) throws JSchException, IOException {
         sshc.createGroup(groupName);
     }
 
     public void updateUser(final String actualUsername,
             final String username, final String password, final boolean status,
-            final String comment, final String shell, final String homeDir)
-            throws IOException, InvalidStateException, InterruptedException {
+            final String comment, final String shell, final String homeDir) throws JSchException, IOException {
         sshc.updateUser(actualUsername, username, password, status, comment,
                 shell, homeDir);
     }
 
-    public void updateGroup(String actualGroupName, String newUserName)
-            throws IOException, InvalidStateException, InterruptedException {
+    public void updateGroup(String actualGroupName, String newUserName) throws JSchException, IOException {
         sshc.updateGroup(actualGroupName, newUserName);
     }
 
-    public void deleteUser(final String username)
-            throws IOException, InvalidStateException, InterruptedException {
+    public void deleteUser(final String username) throws JSchException, IOException {
         sshc.deleteUser(username);
     }
 
-    public void deleteGroup(String groupName)
-            throws IOException, InvalidStateException, InterruptedException {
+    public void deleteGroup(String groupName) throws JSchException, IOException {
         sshc.deleteGroup(groupName);
     }
 
-    public void authenticate(final String username, final String password)
-            throws UnknownHostException, IOException {
+    public void authenticate(final String username, final String password) throws JSchException, IOException {
         sshc.authenticate(username, password);
     }
 }

@@ -23,6 +23,7 @@
  */
 package org.connid.bundles.unix.methods;
 
+import com.jcraft.jsch.JSchException;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import org.connid.bundles.unix.UnixConfiguration;
@@ -37,9 +38,13 @@ import org.identityconnectors.framework.common.objects.Uid;
 public class UnixAuthenticate {
 
     private static final Log LOG = Log.getLog(UnixAuthenticate.class);
+
     private UnixConnection unixConnection = null;
+
     private String username = "";
+
     private GuardedString password = null;
+
     private ObjectClass objectClass;
 
     public UnixAuthenticate(final ObjectClass oc,
@@ -56,12 +61,12 @@ public class UnixAuthenticate {
         try {
             return doAuthenticate();
         } catch (Exception e) {
-            LOG.error(e, "error during authentication");
-            throw new ConnectorException("error during authentication", e);
+            LOG.error(e, "error during authentication of user: " + username);
+            throw new ConnectorException("error during authentication of user: " + username, e);
         }
     }
 
-    private Uid doAuthenticate() throws UnknownHostException, IOException {
+    private Uid doAuthenticate() throws UnknownHostException, IOException, JSchException {
         if (!objectClass.equals(ObjectClass.ACCOUNT)) {
             throw new IllegalStateException("Wrong object class");
         }

@@ -195,7 +195,7 @@ public class UnixExecuteQueryTest extends SharedTestMethods {
         final Set actual = new HashSet();
         connector.executeQuery(ObjectClass.ACCOUNT,
                 new Operand(
-                Operator.EQ, "shell", "/bin/csh", false),
+                Operator.EQ, "shell", "/bin/rbash", false),
                 new ResultsHandler() {
 
                     @Override

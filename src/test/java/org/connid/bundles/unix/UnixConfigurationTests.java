@@ -23,7 +23,6 @@
  */
 package org.connid.bundles.unix;
 
-import org.connid.bundles.unix.UnixConfiguration;
 import org.connid.bundles.unix.utilities.SharedTestMethods;
 import org.connid.bundles.unix.utilities.UnixProperties;
 import org.junit.Assert;

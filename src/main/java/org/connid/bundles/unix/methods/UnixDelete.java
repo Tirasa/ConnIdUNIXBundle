@@ -23,7 +23,7 @@
  */
 package org.connid.bundles.unix.methods;
 
-import com.sshtools.j2ssh.util.InvalidStateException;
+import com.jcraft.jsch.JSchException;
 import java.io.IOException;
 import org.connid.bundles.unix.UnixConfiguration;
 import org.connid.bundles.unix.UnixConnection;
@@ -37,9 +37,13 @@ import org.identityconnectors.framework.common.objects.Uid;
 public class UnixDelete {
 
     private static final Log LOG = Log.getLog(UnixDelete.class);
+
     private UnixConfiguration configuration = null;
+
     private UnixConnection connection = null;
+
     private Uid uid = null;
+
     private ObjectClass objectClass = null;
 
     public UnixDelete(final ObjectClass oc,
@@ -60,8 +64,7 @@ public class UnixDelete {
         }
     }
 
-    private void doDelete()
-            throws IOException, InvalidStateException, InterruptedException {
+    private void doDelete() throws IOException, InterruptedException, JSchException {
 
         if (uid == null || StringUtil.isBlank(uid.getUidValue())) {
             throw new IllegalArgumentException(

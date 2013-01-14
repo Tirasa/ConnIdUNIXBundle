@@ -23,7 +23,7 @@
  */
 package org.connid.bundles.unix.methods;
 
-import com.sshtools.j2ssh.util.InvalidStateException;
+import com.jcraft.jsch.JSchException;
 import java.io.IOException;
 import org.connid.bundles.unix.UnixConfiguration;
 import org.connid.bundles.unix.UnixConnection;
@@ -37,11 +37,17 @@ import org.identityconnectors.framework.common.objects.ResultsHandler;
 public class UnixExecuteQuery {
 
     private static final Log LOG = Log.getLog(UnixExecuteQuery.class);
+
     private UnixConnection connection = null;
+
     private UnixConfiguration unixConfiguration = null;
+
     private Operand filter = null;
+
     private ResultsHandler handler = null;
+
     private ObjectClass objectClass = null;
+
     private String nameToSearch = "";
 
     public UnixExecuteQuery(final UnixConfiguration configuration,
@@ -59,12 +65,11 @@ public class UnixExecuteQuery {
             doExecuteQuery();
         } catch (Exception e) {
             LOG.error(e, "error during execute query operation");
-            throw new ConnectorException(e);
+            throw new ConnectorException(e.getCause());
         }
     }
 
-    private void doExecuteQuery()
-            throws IOException, InvalidStateException, InterruptedException {
+    private void doExecuteQuery() throws JSchException, IOException, InterruptedException {
 
         if (!objectClass.equals(ObjectClass.ACCOUNT)
                 && (!objectClass.equals(ObjectClass.GROUP))) {

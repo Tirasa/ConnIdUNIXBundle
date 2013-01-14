@@ -23,7 +23,7 @@
  */
 package org.connid.bundles.unix.methods;
 
-import com.sshtools.j2ssh.util.InvalidStateException;
+import com.jcraft.jsch.JSchException;
 import java.io.IOException;
 import java.util.Set;
 import org.connid.bundles.unix.UnixConfiguration;
@@ -39,16 +39,27 @@ import org.identityconnectors.framework.common.objects.*;
 public class UnixUpdate {
 
     private static final Log LOG = Log.getLog(UnixUpdate.class);
+
     private Set<Attribute> attrs = null;
+
     private UnixConfiguration configuration = null;
+
     private UnixConnection connection = null;
+
     private Uid uid = null;
+
     private String newUserName = "";
+
     private String password = "";
+
     private boolean status = true;
+
     private String comment = "";
+
     private String shell = "";
+
     private String homeDirectory = "";
+
     private ObjectClass objectClass = null;
 
     public UnixUpdate(final ObjectClass oc,
@@ -70,8 +81,7 @@ public class UnixUpdate {
         }
     }
 
-    private Uid doUpdate()
-            throws IOException, InvalidStateException, InterruptedException {
+    private Uid doUpdate() throws JSchException, IOException {
 
         if (uid == null || StringUtil.isBlank(uid.getUidValue())) {
             throw new IllegalArgumentException(

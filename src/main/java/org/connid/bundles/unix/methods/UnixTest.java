@@ -23,6 +23,7 @@
  */
 package org.connid.bundles.unix.methods;
 
+import com.jcraft.jsch.JSchException;
 import java.io.IOException;
 import org.connid.bundles.unix.UnixConfiguration;
 import org.connid.bundles.unix.UnixConnection;
@@ -48,7 +49,7 @@ public class UnixTest {
         }
     }
 
-    private void execute() throws IOException {
+    private void execute() throws JSchException, IOException {
         unixConnection.testConnection();
     }
 }

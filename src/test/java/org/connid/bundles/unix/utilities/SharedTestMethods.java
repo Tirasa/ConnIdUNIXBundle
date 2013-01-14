@@ -67,7 +67,7 @@ public class SharedTestMethods {
         attributes.add(AttributeBuilder.build("comment", CollectionUtil.newSet(
                 attrs.getUsername())));
         attributes.add(AttributeBuilder.build("shell", CollectionUtil.newSet(
-                "/bin/csh")));
+                "/bin/rbash")));
         attributes.add(name);
         return attributes;
     }

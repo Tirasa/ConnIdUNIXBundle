@@ -22,7 +22,7 @@
  */
 package org.connid.bundles.unix.search;
 
-import com.sshtools.j2ssh.util.InvalidStateException;
+import com.jcraft.jsch.JSchException;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.util.Iterator;
@@ -39,9 +39,13 @@ import org.identityconnectors.framework.common.objects.*;
 public class Search {
 
     private UnixConnection unixConnection = null;
+
     private Operand filter = null;
+
     private UnixConfiguration unixConfiguration = null;
+
     private ObjectClass objectClass = null;
+
     private ResultsHandler handler = null;
 
     public Search(final UnixConfiguration unixConfiguration,
@@ -55,8 +59,7 @@ public class Search {
         this.filter = filter;
     }
 
-    public void equalSearch()
-            throws IOException, InvalidStateException, InterruptedException {
+    public void equalSearch() throws IOException, InterruptedException, JSchException {
         if (objectClass.equals(ObjectClass.ACCOUNT)) {
             PasswdFile passwdFile =
                     new PasswdFile(unixConnection.searchAllUser());
@@ -67,8 +70,7 @@ public class Search {
         }
     }
 
-    public void startsWithSearch() throws IOException,
-            InvalidStateException, InterruptedException {
+    public void startsWithSearch() throws IOException, InterruptedException, JSchException {
         if (objectClass.equals(ObjectClass.ACCOUNT)) {
             PasswdFile passwdFile =
                     new PasswdFile(unixConnection.searchAllUser());
@@ -79,8 +81,7 @@ public class Search {
         }
     }
 
-    public void endsWithSearch() throws IOException,
-            InvalidStateException, InterruptedException {
+    public void endsWithSearch() throws IOException, InterruptedException, JSchException {
         if (objectClass.equals(ObjectClass.ACCOUNT)) {
             PasswdFile passwdFile =
                     new PasswdFile(unixConnection.searchAllUser());
@@ -91,8 +92,7 @@ public class Search {
         }
     }
 
-    public void containsSearch() throws IOException,
-            InvalidStateException, InterruptedException {
+    public void containsSearch() throws IOException, InterruptedException, JSchException {
         if (objectClass.equals(ObjectClass.ACCOUNT)) {
             PasswdFile passwdFile =
                     new PasswdFile(unixConnection.searchAllUser());
@@ -105,7 +105,7 @@ public class Search {
     }
 
     public void orSearch()
-            throws IOException, InvalidStateException, InterruptedException {
+            throws IOException, InterruptedException {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
@@ -114,8 +114,7 @@ public class Search {
     }
 
     private void fillUserHandler(final List<PasswdRow> passwdRows)
-            throws ConnectException,
-            IOException, InvalidStateException, InterruptedException {
+            throws ConnectException, IOException, InterruptedException, JSchException {
         if (passwdRows == null || passwdRows.isEmpty()) {
             throw new ConnectException("No results found");
         }
@@ -149,8 +148,7 @@ public class Search {
         }
     }
 
-    private void fillGroupHandler()
-            throws IOException, InvalidStateException, InterruptedException {
+    private void fillGroupHandler() throws IOException, InterruptedException, JSchException {
         String nameToSearch = filter.getAttributeValue();
         if (StringUtil.isNotBlank(nameToSearch)
                 && StringUtil.isNotEmpty(nameToSearch)

@@ -36,7 +36,7 @@ public class AttributesTestValue extends SharedTestMethods {
             new GuardedString(getNewPassword().toCharArray());
     private final GuardedString WRONG_GUARDED_PASSWORD =
             new GuardedString("wrongpassword".toCharArray());
-    private static final String NEW_PASSWORD = "password2";
+    private static final String NEW_PASSWORD = "newpassword";
     private final ObjectClass WRONG_OBJECTCLASS =
             new ObjectClass("WRONG_OBJECTCLASS");
     private static final String WRONG_GROUPNAME = "wronggroup";
