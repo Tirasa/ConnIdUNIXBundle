@@ -41,6 +41,7 @@ import org.connid.bundles.unix.commands.General;
 import org.connid.bundles.unix.commands.GroupAdd;
 import org.connid.bundles.unix.commands.GroupDel;
 import org.connid.bundles.unix.commands.GroupMod;
+import org.connid.bundles.unix.commands.Sed;
 import org.connid.bundles.unix.commands.Sudo;
 import org.connid.bundles.unix.commands.UserAdd;
 import org.connid.bundles.unix.commands.UserMod;
@@ -283,10 +284,9 @@ public class SSHClient {
             commandToExecute.append(sudoCommand.sudo()).append("; ");
         }
         commandToExecute.append(userDelCommand.deluser());
-//        exec(commandToExecute.toString());
-//        session.disconnect();
-        exec("sed -i -e \'/" + username + "/d\' /etc/shadow && sed -i -e \'/" + username
-                + "/d\' /etc/passwd && sed -i -e \'/" + username + "/d\' /etc/group && rm -rf " + unixConfiguration.
+        Sed sedCommand = new Sed(username);
+        exec(sedCommand.sedCommand("/etc/shadow") + " && " + sedCommand.sedCommand("/etc/passwd") + " && " + sedCommand.
+                sedCommand("/etc/group") + " &&" + "rm -rf" + unixConfiguration.
                 getBaseHomeDirectory() + "/" + username);
         session.disconnect();
     }
