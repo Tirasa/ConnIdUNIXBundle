@@ -38,10 +38,15 @@ import org.junit.Test;
 public class UnixUpdateUserTest extends SharedTestMethods {
 
     private UnixConnector connector = null;
+
     private Name name = null;
+
     private Uid newAccount = null;
+
     private AttributesTestValue attrs = null;
+
     private final static boolean ACTIVE_USER = true;
+
     private final static boolean INACTIVE_USER = false;
 
     @Before
@@ -61,8 +66,9 @@ public class UnixUpdateUserTest extends SharedTestMethods {
         connector.update(ObjectClass.ACCOUNT, newAccount,
                 createSetOfAttributes(name, attrs.getNewPassword(),
                 ACTIVE_USER), null);
-        connector.authenticate(ObjectClass.ACCOUNT, name.getNameValue(),
+        final Uid authUid = connector.authenticate(ObjectClass.ACCOUNT, name.getNameValue(),
                 attrs.getNewGuardedPassword(), null);
+        Assert.assertEquals(newAccount.getUidValue(), authUid.getUidValue());
     }
 
     @Test
@@ -75,8 +81,10 @@ public class UnixUpdateUserTest extends SharedTestMethods {
         connector.update(ObjectClass.ACCOUNT, newAccount,
                 createSetOfAttributes(newName, attrs.getNewPassword(),
                 ACTIVE_USER), null);
-        connector.authenticate(ObjectClass.ACCOUNT, newName.getNameValue(),
+        final Uid authUid = connector.authenticate(ObjectClass.ACCOUNT, newName.getNameValue(),
                 attrs.getNewGuardedPassword(), null);
+        Assert.assertEquals(newName.getNameValue(), authUid.getUidValue());
+
     }
 
     @Test
@@ -87,8 +95,10 @@ public class UnixUpdateUserTest extends SharedTestMethods {
         connector.update(ObjectClass.ACCOUNT, newAccount,
                 createSetOfAttributes(name, attrs.getPassword(),
                 ACTIVE_USER), null);
-        connector.authenticate(ObjectClass.ACCOUNT, newAccount.getUidValue(),
+        final Uid authUid = connector.authenticate(ObjectClass.ACCOUNT, newAccount.getUidValue(),
                 attrs.getGuardedPassword(), null);
+        Assert.assertEquals(newAccount.getUidValue(), authUid.getUidValue());
+
     }
 
     @Test(expected = ConnectorException.class)

@@ -36,13 +36,17 @@ import org.identityconnectors.framework.common.objects.*;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class UnixExecuteQueryTest extends SharedTestMethods {
 
     private UnixConnector connector = null;
+
     private Name name = null;
+
     private Uid newAccount = null;
+
     private AttributesTestValue attrs = null;
 
     @Before
@@ -143,6 +147,7 @@ public class UnixExecuteQueryTest extends SharedTestMethods {
     }
 
     @Test
+    @Ignore
     public final void searchNotEqualsAttribute() {
         newAccount = connector.create(ObjectClass.ACCOUNT,
                 createSetOfAttributes(name, attrs.getPassword(), true), null);

@@ -48,11 +48,9 @@ public class UnixExecuteQuery {
 
     private ObjectClass objectClass = null;
 
-    private String nameToSearch = "";
-
     public UnixExecuteQuery(final UnixConfiguration configuration,
             final ObjectClass oc, final Operand filter,
-            final ResultsHandler rh) throws IOException {
+            final ResultsHandler rh) throws IOException, JSchException {
         connection = UnixConnection.openConnection(configuration);
         unixConfiguration = configuration;
         this.filter = filter;
@@ -69,7 +67,7 @@ public class UnixExecuteQuery {
         }
     }
 
-    private void doExecuteQuery() throws JSchException, IOException, InterruptedException {
+    private void doExecuteQuery() throws IOException, InterruptedException, JSchException {
 
         if (!objectClass.equals(ObjectClass.ACCOUNT)
                 && (!objectClass.equals(ObjectClass.GROUP))) {
@@ -82,8 +80,7 @@ public class UnixExecuteQuery {
 
         switch (filter.getOperator()) {
             case EQ:
-                new Search(unixConfiguration,
-                        connection, handler, objectClass, filter).equalSearch();
+                new Search(unixConfiguration, connection, handler, objectClass, filter).equalSearch();
                 break;
             case SW:
                 new Search(unixConfiguration, connection, handler,

@@ -50,7 +50,7 @@ public class UnixAuthenticate {
     public UnixAuthenticate(final ObjectClass oc,
             final UnixConfiguration unixConfiguration,
             final String username, final GuardedString password)
-            throws IOException {
+            throws IOException, JSchException {
         unixConnection = UnixConnection.openConnection(unixConfiguration);
         this.username = username;
         this.password = password;

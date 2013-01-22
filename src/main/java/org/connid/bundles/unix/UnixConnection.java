@@ -23,87 +23,173 @@
  */
 package org.connid.bundles.unix;
 
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.List;
-import org.connid.bundles.unix.sshmanagement.SSHClient;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import org.connid.bundles.unix.utilities.DefaultProperties;
+import org.connid.bundles.unix.utilities.Utilities;
+import org.identityconnectors.common.logging.Log;
 
 public class UnixConnection {
 
+    private static final Log LOG = Log.getLog(UnixConnection.class);
+
+    private static UnixConnection unixConnection = null;
+
     private static UnixConfiguration unixConfiguration = null;
 
-    SSHClient sshc = null;
+    private static Session session;
+
+    private ChannelExec execChannel;
+
+    private InputStream fromServer;
+
+    private OutputStream toServer;
+
+    private static JSch jSch = new JSch();
 
     private UnixConnection(final UnixConfiguration unixConfiguration)
-            throws IOException {
-        this.unixConfiguration = unixConfiguration;
-        sshc = new SSHClient(unixConfiguration);
+            throws IOException, JSchException {
+        UnixConnection.unixConfiguration = unixConfiguration;
+        initSession(unixConfiguration);
     }
 
     public static UnixConnection openConnection(
-            final UnixConfiguration unixConfiguration) throws IOException {
-        return new UnixConnection(unixConfiguration);
+            final UnixConfiguration unixConfiguration) throws IOException, JSchException {
+        if (unixConnection == null) {
+            unixConnection = new UnixConnection(unixConfiguration);
+        } else {
+            unixConnection.setUnixConfuguration(unixConfiguration);
+        }
+        return unixConnection;
     }
 
-    public static UnixConfiguration getConfiguration() {
-        return unixConfiguration;
+    private void setUnixConfuguration(final UnixConfiguration unixConfiguration) {
+        UnixConnection.unixConfiguration = unixConfiguration;
     }
 
-    public String userExists(final String username) throws JSchException, IOException {
-        return sshc.userExists(username);
+    public String execute(final String command) throws JSchException, IOException {
+        if (!session.isConnected()) {
+            initSession(unixConfiguration);
+            session.connect(DefaultProperties.SSH_SOCKET_TIMEOUT);
+            LOG.info("User " + unixConfiguration.getAdmin() + " authenticated");
+        } else {
+            LOG.info("User " + unixConfiguration.getAdmin() + " already authenticated");
+        }
+        if (execChannel == null || !execChannel.isConnected()) {
+            execChannel = (ChannelExec) session.openChannel("exec");
+            LOG.info("ChannelShell is connected.");
+
+            fromServer = execChannel.getInputStream();
+            toServer = execChannel.getOutputStream();
+        } else {
+            LOG.info("Channel (shell) still open.");
+        }
+        execChannel.setCommand(command);
+        execChannel.connect(DefaultProperties.SSH_SOCKET_TIMEOUT);
+        return getOutput();
     }
 
-    public String searchUser(final String username) throws JSchException, IOException {
-        return sshc.searchUser(username);
+    private void initSession(final UnixConfiguration unixConfiguration) throws JSchException {
+        session = jSch.getSession(unixConfiguration.getAdmin(), unixConfiguration.getHostname(),
+                unixConfiguration.getPort());
+        session.setPassword(Utilities.getPlainPassword(unixConfiguration.getPassword()));
+        session.setConfig("StrictHostKeyChecking", "no");
     }
 
-    public List<String> searchAllUser() throws JSchException, IOException {
-        return sshc.searchAllUser();
+    private String getOutput() throws IOException {
+        String line;
+        BufferedReader br = new BufferedReader(
+                new InputStreamReader(fromServer));
+        StringBuilder buffer = new StringBuilder();
+        while ((line = br.readLine()) != null) {
+            buffer.append(line).append("\n");
+        }
+        if (execChannel.isClosed()) {
+            LOG.info("exit-status: " + execChannel.getExitStatus());
+        }
+        try {
+            Thread.sleep(1000);
+        } catch (Exception ee) {
+        }
+        return buffer.toString();
     }
 
-    public String userStatus(final String username) throws JSchException, IOException {
-        return sshc.userStatus(username);
+    private void sleep(long timeout) {
+        try {
+            Thread.sleep(timeout);
+        } catch (Exception ee) {
+            LOG.info("Failed to sleep between reads with pollTimeout: " + 20, ee);
+        }
     }
 
-    public String groupExists(String groupname) throws JSchException, IOException {
-        return sshc.groupExists(groupname);
+    public void testConnection() throws Exception {
+        System.out.println("HOST: " + unixConfiguration.getHostname());
+        if (!session.isConnected()) {
+            initSession(unixConfiguration);
+        }
+        session.connect(DefaultProperties.SSH_SOCKET_TIMEOUT);
+        session.sendKeepAliveMsg();
     }
 
-    public void testConnection() throws JSchException {
-        sshc.getChannelExec();
-    }
-
-    public void createUser(final String uidstring,
-            final String password, final String comment, final String shell,
-            final String homeDirectory, final boolean status) throws JSchException, IOException {
-        sshc.createUser(uidstring, password, comment, shell,
-                homeDirectory, status);
-    }
-
-    public void createGroup(String groupName) throws JSchException, IOException {
-        sshc.createGroup(groupName);
-    }
-
-    public void updateUser(final String actualUsername,
-            final String username, final String password, final boolean status,
-            final String comment, final String shell, final String homeDir) throws JSchException, IOException {
-        sshc.updateUser(actualUsername, username, password, status, comment,
-                shell, homeDir);
-    }
-
-    public void updateGroup(String actualGroupName, String newUserName) throws JSchException, IOException {
-        sshc.updateGroup(actualGroupName, newUserName);
-    }
-
-    public void deleteUser(final String username) throws JSchException, IOException {
-        sshc.deleteUser(username);
-    }
-
-    public void deleteGroup(String groupName) throws JSchException, IOException {
-        sshc.deleteGroup(groupName);
+    public void disconnect() {
+        if (execChannel != null && execChannel.isConnected()) {
+            execChannel.disconnect();
+            LOG.info("Channel Shell is disconnected.");
+        }
+        if (session != null && session.isConnected()) {
+            session.disconnect();
+            LOG.info("Session is disconnected.");
+        }
     }
 
     public void authenticate(final String username, final String password) throws JSchException, IOException {
-        sshc.authenticate(username, password);
+        session = jSch.getSession(username, unixConfiguration.getHostname(), unixConfiguration.getPort());
+        session.setPassword(password);
+        session.setConfig("StrictHostKeyChecking", "no");
+        session.connect(DefaultProperties.SSH_SOCKET_TIMEOUT);
+        session.disconnect();
     }
+//    private void writeToServer(String command) throws IOException {
+//        String commandWithEnter = command;
+//        if (!command.endsWith("\r\n")) {
+//            commandWithEnter += "\r\n";
+//        }
+//        toServer.write((commandWithEnter).getBytes("UTF-8"));
+//        toServer.flush();
+//    }
+//
+//    private String getOutput2() throws IOException {
+//        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+//        byte[] buffer = new byte[1024];
+//
+//        String linePrompt = "\\" + username + ">"; // indicates console has new-line, stop reading.
+//        long timeout = System.currentTimeMillis() + DefaultProperties.SSH_SOCKET_TIMEOUT;
+//
+//        while (System.currentTimeMillis() < timeout
+//                && !Util.byte2str(bos.toByteArray()).contains(linePrompt)) {
+//            while (fromServer.available() > 0) {
+//                int count = fromServer.read(buffer, 0, 1024);
+//                if (count >= 0) {
+//                    bos.write(buffer, 0, count);
+//                } else {
+//                    break;
+//                }
+//            }
+//            if (execChannel.isClosed()) {
+//                break;
+//            }
+//            // Don't spin like crazy though the while loop
+////            sleep(20);
+//        }
+//        String result = bos.toString("UTF-8");
+//        LOG.info("read from server: " + result);
+//        return result;
+//    }
 }

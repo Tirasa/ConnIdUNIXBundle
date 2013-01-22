@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.util.Set;
 import org.connid.bundles.unix.UnixConfiguration;
 import org.connid.bundles.unix.UnixConnection;
+import org.connid.bundles.unix.UnixConnector;
+import org.connid.bundles.unix.sshmanagement.CommandGenerator;
 import org.connid.bundles.unix.utilities.EvaluateCommandsResultOutput;
 import org.connid.bundles.unix.utilities.Utilities;
 import org.identityconnectors.common.StringUtil;
@@ -38,20 +40,28 @@ import org.identityconnectors.framework.common.objects.*;
 public class UnixCreate {
 
     private static final Log LOG = Log.getLog(UnixCreate.class);
+
     private Set<Attribute> attrs = null;
-    private UnixConnection connection = null;
+
+    private UnixConnection unixConnection = null;
+
     private UnixConfiguration configuration = null;
+
     private ObjectClass objectClass = null;
+
     String comment = "";
+
     String shell = "";
+
     String homeDirectory = "";
+
     boolean status = false;
 
     public UnixCreate(final ObjectClass oc,
             final UnixConfiguration unixConfiguration,
-            final Set<Attribute> attributes) throws IOException {
+            final Set<Attribute> attributes) throws IOException, JSchException {
         this.attrs = attributes;
-        connection = UnixConnection.openConnection(unixConfiguration);
+        unixConnection = UnixConnection.openConnection(unixConfiguration);
         configuration = unixConfiguration;
         objectClass = oc;
     }
@@ -83,7 +93,7 @@ public class UnixCreate {
 
         if (objectClass.equals(ObjectClass.ACCOUNT)) {
             if (EvaluateCommandsResultOutput.evaluateUserOrGroupExists(
-                    connection.userExists(username))) {
+                    unixConnection.execute(UnixConnector.getCommandGenerator().userExists(username)))) {
                 throw new ConnectorException(
                         "User " + username + " already exists");
             }
@@ -109,15 +119,18 @@ public class UnixCreate {
             final String password = Utilities.getPlainPassword(
                     AttributeUtil.getPasswordValue(attrs));
 
-            connection.createUser(username, password, comment, shell,
-                    homeDirectory, status);
+            unixConnection.execute(UnixConnector.getCommandGenerator().
+                    createUser(username, password, comment, shell, homeDirectory, status));
+            if (!status) {
+                unixConnection.execute(UnixConnector.getCommandGenerator().lockUser(username));
+            }
         } else if (objectClass.equals(ObjectClass.GROUP)) {
             if (EvaluateCommandsResultOutput.evaluateUserOrGroupExists(
-                    connection.groupExists(username))) {
+                    unixConnection.execute(UnixConnector.getCommandGenerator().groupExists(username)))) {
                 throw new ConnectorException(
                         "Group " + username + " already exists");
             }
-            connection.createGroup(username);
+            unixConnection.execute(UnixConnector.getCommandGenerator().createGroup(username));
         }
 
         return new Uid(username);

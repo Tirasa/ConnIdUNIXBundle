@@ -28,26 +28,29 @@ import org.identityconnectors.framework.common.objects.Uid;
 public class Operand {
 
     private Operator operator = null;
+
     private String attributeName = "";
+
     private String attributeValue = "";
+
     private boolean not = false;
+
     private Operand firstOperand = null;
+
     private Operand secondOperand = null;
 
-    public Operand(final Operator operator, final String name,
-            final String value, final boolean not) {
+    public Operand(final Operator operator, final String name, final String value, final boolean not) {
         this.operator = operator;
         attributeName = name;
         attributeValue = value;
         this.not = not;
     }
 
-    public Operand(final Operator operator, final Operand firstOperand,
-            final Operand secondOperand) {
+    public Operand(final Operator operator, final Operand firstOperand, final Operand secondOperand) {
         this.operator = operator;
         this.firstOperand = firstOperand;
         this.secondOperand = secondOperand;
-    }
+    }   
 
     public final Operand getFirstOperand() {
         return firstOperand;

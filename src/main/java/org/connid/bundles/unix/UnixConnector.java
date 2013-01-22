@@ -23,15 +23,18 @@
  */
 package org.connid.bundles.unix;
 
-import org.connid.bundles.unix.methods.UnixCreate;
-import org.connid.bundles.unix.methods.UnixUpdate;
+import com.jcraft.jsch.JSchException;
+import java.io.IOException;
+import java.util.Set;
+import javax.swing.text.html.HTMLDocument;
 import org.connid.bundles.unix.methods.UnixAuthenticate;
+import org.connid.bundles.unix.methods.UnixCreate;
 import org.connid.bundles.unix.methods.UnixDelete;
 import org.connid.bundles.unix.methods.UnixExecuteQuery;
 import org.connid.bundles.unix.methods.UnixTest;
-import java.io.IOException;
-import java.util.Set;
+import org.connid.bundles.unix.methods.UnixUpdate;
 import org.connid.bundles.unix.search.Operand;
+import org.connid.bundles.unix.sshmanagement.CommandGenerator;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.*;
@@ -47,7 +50,10 @@ public class UnixConnector implements Connector, CreateOp, UpdateOp,
         DeleteOp, TestOp, SearchOp<Operand>, AuthenticateOp {
 
     private static final Log LOG = Log.getLog(UnixConnector.class);
+
     private UnixConfiguration unixConfiguration;
+
+    private static CommandGenerator commandGenerator = null;
 
     @Override
     public final Configuration getConfiguration() {
@@ -57,11 +63,22 @@ public class UnixConnector implements Connector, CreateOp, UpdateOp,
     @Override
     public final void init(final Configuration configuration) {
         unixConfiguration = (UnixConfiguration) configuration;
+        commandGenerator = new CommandGenerator(unixConfiguration);
+    }
+
+    public static CommandGenerator getCommandGenerator() {
+        return commandGenerator;
     }
 
     @Override
     public final void dispose() {
-        //no action
+        try {
+            UnixConnection.openConnection(unixConfiguration).disconnect();
+        } catch (IOException ex) {
+            LOG.error("Error in connection process", ex);
+        } catch (JSchException jse) {
+            LOG.error("Error in connection process", jse);
+        }
     }
 
     @Override
@@ -71,74 +88,79 @@ public class UnixConnector implements Connector, CreateOp, UpdateOp,
             new UnixTest(unixConfiguration).test();
         } catch (IOException ex) {
             LOG.error("Error in connection process", ex);
+        } catch (JSchException jse) {
+            LOG.error("Error in connection process", jse);
         }
     }
 
     @Override
-    public final Uid create(final ObjectClass oc, final Set<Attribute> set,
-            final OperationOptions oo) {
+    public final Uid create(final ObjectClass oc, final Set<Attribute> set, final OperationOptions oo) {
         LOG.info("Create new user");
         Uid uidResult = null;
         try {
             uidResult = new UnixCreate(oc, unixConfiguration, set).create();
         } catch (IOException ex) {
             LOG.error("Error in connection process", ex);
+        } catch (JSchException ex) {
+            LOG.error("Error in connection process", ex);
         }
         return uidResult;
     }
 
     @Override
-    public final void delete(final ObjectClass oc, final Uid uid,
-            final OperationOptions oo) {
+    public final void delete(final ObjectClass oc, final Uid uid, final OperationOptions oo) {
         try {
             new UnixDelete(oc, unixConfiguration, uid).delete();
         } catch (IOException ex) {
             LOG.error("Error in connection process", ex);
+        } catch (JSchException ex) {
+            LOG.error("Error in connection process", ex);
         }
     }
 
     @Override
-    public final Uid authenticate(final ObjectClass oc, final String username,
-            final GuardedString gs, final OperationOptions oo) {
+    public final Uid authenticate(final ObjectClass oc, final String username, final GuardedString gs,
+            final OperationOptions oo) {
         Uid uidResult = null;
         try {
             LOG.info("Authenticate user: " + username);
-            uidResult = new UnixAuthenticate(oc,
-                    unixConfiguration, username, gs).authenticate();
+            uidResult = new UnixAuthenticate(oc, unixConfiguration, username, gs).authenticate();
         } catch (IOException ex) {
+            LOG.error("Error in connection process", ex);
+        } catch (JSchException ex) {
             LOG.error("Error in connection process", ex);
         }
         return uidResult;
     }
 
     @Override
-    public final Uid update(final ObjectClass oc, final Uid uid,
-            final Set<Attribute> set, final OperationOptions oo) {
+    public final Uid update(final ObjectClass oc, final Uid uid, final Set<Attribute> set, final OperationOptions oo) {
         try {
             new UnixUpdate(oc, unixConfiguration, uid, set).update();
         } catch (IOException ex) {
+            LOG.error("Error in connection process", ex);
+        } catch (JSchException ex) {
             LOG.error("Error in connection process", ex);
         }
         return uid;
     }
 
     @Override
-    public final void executeQuery(final ObjectClass oc, final Operand filter,
-            final ResultsHandler rh, final OperationOptions oo) {
+    public final void executeQuery(final ObjectClass oc, final Operand filter, final ResultsHandler rh,
+            final OperationOptions oo) {
         LOG.info("Execute query");
         try {
-            new UnixExecuteQuery(
-                    unixConfiguration, oc, filter, rh).executeQuery();
+            new UnixExecuteQuery(unixConfiguration, oc, filter, rh).executeQuery();
         } catch (IOException ex) {
+            LOG.error("Error in connection process", ex);
+        } catch (JSchException ex) {
             LOG.error("Error in connection process", ex);
         }
     }
 
     @Override
-    public final FilterTranslator<Operand> createFilterTranslator(
-            final ObjectClass oc, final OperationOptions oo) {
-        if (oc == null || (!oc.equals(ObjectClass.ACCOUNT))
-                && (!oc.equals(ObjectClass.GROUP))) {
+    public final FilterTranslator<Operand> createFilterTranslator(final ObjectClass oc, final OperationOptions oo) {
+        if (oc == null || (!oc.equals(ObjectClass.ACCOUNT)) && (!oc.equals(ObjectClass.GROUP))) {
             throw new IllegalArgumentException("Invalid objectclass");
         }
         return new UnixFilterTranslator();

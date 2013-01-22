@@ -27,6 +27,8 @@ import com.jcraft.jsch.JSchException;
 import java.io.IOException;
 import org.connid.bundles.unix.UnixConfiguration;
 import org.connid.bundles.unix.UnixConnection;
+import org.connid.bundles.unix.UnixConnector;
+import org.connid.bundles.unix.sshmanagement.CommandGenerator;
 import org.connid.bundles.unix.utilities.EvaluateCommandsResultOutput;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
@@ -40,7 +42,7 @@ public class UnixDelete {
 
     private UnixConfiguration configuration = null;
 
-    private UnixConnection connection = null;
+    private UnixConnection unixConnection = null;
 
     private Uid uid = null;
 
@@ -48,9 +50,9 @@ public class UnixDelete {
 
     public UnixDelete(final ObjectClass oc,
             final UnixConfiguration unixConfiguration,
-            final Uid uid) throws IOException {
+            final Uid uid) throws IOException, JSchException {
         configuration = unixConfiguration;
-        connection = UnixConnection.openConnection(configuration);
+        unixConnection = UnixConnection.openConnection(configuration);
         this.uid = uid;
         objectClass = oc;
     }
@@ -79,18 +81,18 @@ public class UnixDelete {
         }
 
         if (objectClass.equals(ObjectClass.ACCOUNT)) {
-            if (!EvaluateCommandsResultOutput.evaluateUserOrGroupExists(
-                    connection.userExists(uid.getUidValue()))) {
+            if (!EvaluateCommandsResultOutput.evaluateUserOrGroupExists(unixConnection.execute(UnixConnector.
+                    getCommandGenerator().userExists(uid.getUidValue())))) {
                 LOG.error("User do not exists");
                 throw new ConnectorException("User do not exists");
             }
-            connection.deleteUser(uid.getUidValue());
+            unixConnection.execute(UnixConnector.getCommandGenerator().deleteUser(uid.getUidValue()));
         } else if (objectClass.equals(ObjectClass.GROUP)) {
             if (!EvaluateCommandsResultOutput.evaluateUserOrGroupExists(
-                    connection.groupExists(uid.getUidValue()))) {
+                    unixConnection.execute(UnixConnector.getCommandGenerator().groupExists(uid.getUidValue())))) {
                 throw new ConnectorException("Group do not exists");
             }
-            connection.deleteGroup(uid.getUidValue());
+            unixConnection.execute(UnixConnector.getCommandGenerator().deleteGroup(uid.getUidValue()));
         }
     }
 }

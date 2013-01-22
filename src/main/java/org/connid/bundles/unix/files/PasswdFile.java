@@ -26,7 +26,6 @@ package org.connid.bundles.unix.files;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import org.connid.bundles.unix.search.Operand;
 import org.connid.bundles.unix.utilities.EvaluateCommandsResultOutput;
 
 public class PasswdFile {
@@ -43,37 +42,21 @@ public class PasswdFile {
         }
     }
 
-    public final List<PasswdRow> searchRowByAttribute(final String attribute,
-            final boolean not) {
+    public final List<PasswdRow> searchRowByAttribute(final String attribute, final boolean not) {
         List<PasswdRow> userRow = new ArrayList<PasswdRow>();
         for (Iterator<PasswdRow> it = passwdRows.iterator(); it.hasNext();) {
             PasswdRow passwdRow = it.next();
-            if (!not) {
-                if (attribute.equalsIgnoreCase(passwdRow.getUsername())) {
-                    userRow.add(passwdRow);
-                }
-                if (attribute.equalsIgnoreCase(passwdRow.getShell())) {
-                    userRow.add(passwdRow);
-                }
-                if (attribute.equalsIgnoreCase(passwdRow.getComment())) {
-                    userRow.add(passwdRow);
-                }
-                if (attribute.equalsIgnoreCase(passwdRow.getHomeDirectory())) {
-                    userRow.add(passwdRow);
-                }
-            } else {
-                if (!attribute.equalsIgnoreCase(passwdRow.getUsername())) {
-                    userRow.add(passwdRow);
-                }
-                if (!attribute.equalsIgnoreCase(passwdRow.getShell())) {
-                    userRow.add(passwdRow);
-                }
-                if (!attribute.equalsIgnoreCase(passwdRow.getComment())) {
-                    userRow.add(passwdRow);
-                }
-                if (!attribute.equalsIgnoreCase(passwdRow.getHomeDirectory())) {
-                    userRow.add(passwdRow);
-                }
+            if (attribute.equalsIgnoreCase(passwdRow.getUsername())) {
+                userRow.add(passwdRow);
+            }
+            if (attribute.equalsIgnoreCase(passwdRow.getShell())) {
+                userRow.add(passwdRow);
+            }
+            if (attribute.equalsIgnoreCase(passwdRow.getComment())) {
+                userRow.add(passwdRow);
+            }
+            if (attribute.equalsIgnoreCase(passwdRow.getHomeDirectory())) {
+                userRow.add(passwdRow);
             }
         }
         return userRow;

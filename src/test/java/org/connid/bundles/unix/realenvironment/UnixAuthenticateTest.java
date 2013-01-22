@@ -38,8 +38,11 @@ import org.junit.Test;
 public class UnixAuthenticateTest extends SharedTestMethods {
 
     private UnixConnector connector = null;
+
     private Name name = null;
+
     private Uid newAccount = null;
+
     private AttributesTestValue attrs = null;
 
     @Before
@@ -55,8 +58,9 @@ public class UnixAuthenticateTest extends SharedTestMethods {
         newAccount = connector.create(ObjectClass.ACCOUNT,
                 createSetOfAttributes(name, attrs.getPassword(), true), null);
         Assert.assertEquals(name.getNameValue(), newAccount.getUidValue());
-        connector.authenticate(ObjectClass.ACCOUNT, newAccount.getUidValue(),
+        final Uid authUid = connector.authenticate(ObjectClass.ACCOUNT, newAccount.getUidValue(),
                 attrs.getGuardedPassword(), null);
+        Assert.assertEquals(newAccount.getUidValue(), authUid.getUidValue());
         connector.delete(ObjectClass.ACCOUNT, newAccount, null);
     }
 

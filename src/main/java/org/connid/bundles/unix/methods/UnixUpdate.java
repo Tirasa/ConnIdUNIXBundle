@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.util.Set;
 import org.connid.bundles.unix.UnixConfiguration;
 import org.connid.bundles.unix.UnixConnection;
+import org.connid.bundles.unix.UnixConnector;
+import org.connid.bundles.unix.sshmanagement.CommandGenerator;
 import org.connid.bundles.unix.utilities.EvaluateCommandsResultOutput;
 import org.connid.bundles.unix.utilities.Utilities;
 import org.identityconnectors.common.StringUtil;
@@ -44,7 +46,7 @@ public class UnixUpdate {
 
     private UnixConfiguration configuration = null;
 
-    private UnixConnection connection = null;
+    private UnixConnection unixConnection = null;
 
     private Uid uid = null;
 
@@ -64,11 +66,11 @@ public class UnixUpdate {
 
     public UnixUpdate(final ObjectClass oc,
             final UnixConfiguration unixConfiguration,
-            final Uid uid, final Set<Attribute> attrs) throws IOException {
+            final Uid uid, final Set<Attribute> attrs) throws IOException, JSchException {
         this.configuration = unixConfiguration;
         this.uid = uid;
         this.attrs = attrs;
-        connection = UnixConnection.openConnection(configuration);
+        unixConnection = UnixConnection.openConnection(configuration);
         objectClass = oc;
     }
 
@@ -81,7 +83,7 @@ public class UnixUpdate {
         }
     }
 
-    private Uid doUpdate() throws JSchException, IOException {
+    private Uid doUpdate() throws IOException, JSchException {
 
         if (uid == null || StringUtil.isBlank(uid.getUidValue())) {
             throw new IllegalArgumentException(
@@ -97,7 +99,7 @@ public class UnixUpdate {
 
         if (objectClass.equals(ObjectClass.ACCOUNT)) {
             if (!EvaluateCommandsResultOutput.evaluateUserOrGroupExists(
-                    connection.userExists(uid.getUidValue()))) {
+                    unixConnection.execute(UnixConnector.getCommandGenerator().userExists(uid.getUidValue())))) {
                 throw new ConnectorException(
                         "User " + uid + " do not exists");
             }
@@ -118,19 +120,24 @@ public class UnixUpdate {
                     homeDirectory = (String) attr.getValue().get(0).toString();
                 }
             }
-            connection.updateUser(uid.getUidValue(), newUserName, password,
-                    status, comment, shell, homeDirectory);
+            unixConnection.execute(UnixConnector.getCommandGenerator().updateUser(uid.getUidValue(), newUserName, password,
+                    status, comment, shell, homeDirectory));
+            if (!status) {
+                unixConnection.execute(UnixConnector.getCommandGenerator().lockUser(uid.getUidValue()));
+            } else {
+                unixConnection.execute(UnixConnector.getCommandGenerator().unlockUser(uid.getUidValue()));
+            }
             if (StringUtil.isNotBlank(newUserName)
                     && StringUtil.isNotEmpty(newUserName)) {
-                connection.updateGroup(uid.getUidValue(), newUserName);
+                unixConnection.execute(UnixConnector.getCommandGenerator().updateGroup(uid.getUidValue(), newUserName));
             }
         } else if (objectClass.equals(ObjectClass.GROUP)) {
             if (!EvaluateCommandsResultOutput.evaluateUserOrGroupExists(
-                    connection.groupExists(newUserName))) {
+                    unixConnection.execute(UnixConnector.getCommandGenerator().groupExists(newUserName)))) {
                 throw new ConnectorException(
                         "Group do not exists");
             }
-            connection.updateGroup(uid.getUidValue(), newUserName);
+            unixConnection.execute(UnixConnector.getCommandGenerator().updateGroup(uid.getUidValue(), newUserName));
         }
         return uid;
     }
