@@ -29,7 +29,6 @@ import java.util.Set;
 import org.connid.bundles.unix.UnixConfiguration;
 import org.connid.bundles.unix.UnixConnection;
 import org.connid.bundles.unix.UnixConnector;
-import org.connid.bundles.unix.sshmanagement.CommandGenerator;
 import org.connid.bundles.unix.utilities.EvaluateCommandsResultOutput;
 import org.connid.bundles.unix.utilities.Utilities;
 import org.identityconnectors.common.StringUtil;

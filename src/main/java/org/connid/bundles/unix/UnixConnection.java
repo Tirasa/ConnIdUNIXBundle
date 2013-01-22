@@ -31,7 +31,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
+import org.connid.bundles.unix.utilities.Constants;
 import org.connid.bundles.unix.utilities.DefaultProperties;
 import org.connid.bundles.unix.utilities.Utilities;
 import org.identityconnectors.common.logging.Log;
@@ -50,15 +50,7 @@ public class UnixConnection {
 
     private InputStream fromServer;
 
-    private OutputStream toServer;
-
     private static JSch jSch = new JSch();
-
-    private UnixConnection(final UnixConfiguration unixConfiguration)
-            throws IOException, JSchException {
-        UnixConnection.unixConfiguration = unixConfiguration;
-        initSession(unixConfiguration);
-    }
 
     public static UnixConnection openConnection(
             final UnixConfiguration unixConfiguration) throws IOException, JSchException {
@@ -70,6 +62,19 @@ public class UnixConnection {
         return unixConnection;
     }
 
+    private UnixConnection(final UnixConfiguration unixConfiguration)
+            throws IOException, JSchException {
+        UnixConnection.unixConfiguration = unixConfiguration;
+        initSession(unixConfiguration);
+    }
+
+    private void initSession(final UnixConfiguration unixConfiguration) throws JSchException {
+        session = jSch.getSession(unixConfiguration.getAdmin(), unixConfiguration.getHostname(),
+                unixConfiguration.getPort());
+        session.setPassword(Utilities.getPlainPassword(unixConfiguration.getPassword()));
+        session.setConfig(Constants.STRICT_HOST_KEY_CHECKING, "no");
+    }
+
     private void setUnixConfuguration(final UnixConfiguration unixConfiguration) {
         UnixConnection.unixConfiguration = unixConfiguration;
     }
@@ -78,32 +83,18 @@ public class UnixConnection {
         if (!session.isConnected()) {
             initSession(unixConfiguration);
             session.connect(DefaultProperties.SSH_SOCKET_TIMEOUT);
-            LOG.info("User " + unixConfiguration.getAdmin() + " authenticated");
-        } else {
-            LOG.info("User " + unixConfiguration.getAdmin() + " already authenticated");
         }
         if (execChannel == null || !execChannel.isConnected()) {
             execChannel = (ChannelExec) session.openChannel("exec");
-            LOG.info("ChannelShell is connected.");
-
             fromServer = execChannel.getInputStream();
-            toServer = execChannel.getOutputStream();
-        } else {
-            LOG.info("Channel (shell) still open.");
         }
+        LOG.info("Command to execute: " + command);
         execChannel.setCommand(command);
         execChannel.connect(DefaultProperties.SSH_SOCKET_TIMEOUT);
-        return getOutput();
+        return readOutput();
     }
 
-    private void initSession(final UnixConfiguration unixConfiguration) throws JSchException {
-        session = jSch.getSession(unixConfiguration.getAdmin(), unixConfiguration.getHostname(),
-                unixConfiguration.getPort());
-        session.setPassword(Utilities.getPlainPassword(unixConfiguration.getPassword()));
-        session.setConfig("StrictHostKeyChecking", "no");
-    }
-
-    private String getOutput() throws IOException {
+    private String readOutput() throws IOException {
         String line;
         BufferedReader br = new BufferedReader(
                 new InputStreamReader(fromServer));
@@ -114,28 +105,32 @@ public class UnixConnection {
         if (execChannel.isClosed()) {
             LOG.info("exit-status: " + execChannel.getExitStatus());
         }
-        try {
-            Thread.sleep(1000);
-        } catch (Exception ee) {
-        }
+        sleep(1000);
         return buffer.toString();
     }
 
-    private void sleep(long timeout) {
+    private void sleep(final long timeout) {
         try {
             Thread.sleep(timeout);
         } catch (Exception ee) {
-            LOG.info("Failed to sleep between reads with pollTimeout: " + 20, ee);
+            LOG.info("Failed to sleep between reads with pollTimeout: " + 1000, ee);
         }
     }
 
     public void testConnection() throws Exception {
-        System.out.println("HOST: " + unixConfiguration.getHostname());
         if (!session.isConnected()) {
             initSession(unixConfiguration);
         }
         session.connect(DefaultProperties.SSH_SOCKET_TIMEOUT);
         session.sendKeepAliveMsg();
+    }
+
+    public void authenticate(final String username, final String password) throws JSchException, IOException {
+        session = jSch.getSession(username, unixConfiguration.getHostname(), unixConfiguration.getPort());
+        session.setPassword(password);
+        session.setConfig("StrictHostKeyChecking", "no");
+        session.connect(DefaultProperties.SSH_SOCKET_TIMEOUT);
+        session.disconnect();
     }
 
     public void disconnect() {
@@ -148,48 +143,4 @@ public class UnixConnection {
             LOG.info("Session is disconnected.");
         }
     }
-
-    public void authenticate(final String username, final String password) throws JSchException, IOException {
-        session = jSch.getSession(username, unixConfiguration.getHostname(), unixConfiguration.getPort());
-        session.setPassword(password);
-        session.setConfig("StrictHostKeyChecking", "no");
-        session.connect(DefaultProperties.SSH_SOCKET_TIMEOUT);
-        session.disconnect();
-    }
-//    private void writeToServer(String command) throws IOException {
-//        String commandWithEnter = command;
-//        if (!command.endsWith("\r\n")) {
-//            commandWithEnter += "\r\n";
-//        }
-//        toServer.write((commandWithEnter).getBytes("UTF-8"));
-//        toServer.flush();
-//    }
-//
-//    private String getOutput2() throws IOException {
-//        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-//        byte[] buffer = new byte[1024];
-//
-//        String linePrompt = "\\" + username + ">"; // indicates console has new-line, stop reading.
-//        long timeout = System.currentTimeMillis() + DefaultProperties.SSH_SOCKET_TIMEOUT;
-//
-//        while (System.currentTimeMillis() < timeout
-//                && !Util.byte2str(bos.toByteArray()).contains(linePrompt)) {
-//            while (fromServer.available() > 0) {
-//                int count = fromServer.read(buffer, 0, 1024);
-//                if (count >= 0) {
-//                    bos.write(buffer, 0, count);
-//                } else {
-//                    break;
-//                }
-//            }
-//            if (execChannel.isClosed()) {
-//                break;
-//            }
-//            // Don't spin like crazy though the while loop
-////            sleep(20);
-//        }
-//        String result = bos.toString("UTF-8");
-//        LOG.info("read from server: " + result);
-//        return result;
-//    }
 }

@@ -29,7 +29,6 @@ import java.util.Set;
 import org.connid.bundles.unix.UnixConfiguration;
 import org.connid.bundles.unix.UnixConnection;
 import org.connid.bundles.unix.UnixConnector;
-import org.connid.bundles.unix.sshmanagement.CommandGenerator;
 import org.connid.bundles.unix.utilities.EvaluateCommandsResultOutput;
 import org.connid.bundles.unix.utilities.Utilities;
 import org.identityconnectors.common.StringUtil;
@@ -86,32 +85,27 @@ public class UnixUpdate {
     private Uid doUpdate() throws IOException, JSchException {
 
         if (uid == null || StringUtil.isBlank(uid.getUidValue())) {
-            throw new IllegalArgumentException(
-                    "No Uid attribute provided in the attributes");
+            throw new IllegalArgumentException("No Uid attribute provided in the attributes");
         }
 
         LOG.info("Update user: " + uid.getUidValue());
 
-        if (!objectClass.equals(ObjectClass.ACCOUNT)
-                && (!objectClass.equals(ObjectClass.GROUP))) {
+        if (!objectClass.equals(ObjectClass.ACCOUNT) && (!objectClass.equals(ObjectClass.GROUP))) {
             throw new IllegalStateException("Wrong object class");
         }
 
         if (objectClass.equals(ObjectClass.ACCOUNT)) {
             if (!EvaluateCommandsResultOutput.evaluateUserOrGroupExists(
                     unixConnection.execute(UnixConnector.getCommandGenerator().userExists(uid.getUidValue())))) {
-                throw new ConnectorException(
-                        "User " + uid + " do not exists");
+                throw new ConnectorException("User " + uid + " do not exists");
             }
             for (Attribute attr : attrs) {
                 if (attr.is(Name.NAME) || attr.is(Uid.NAME)) {
                     newUserName = (String) attr.getValue().get(0);
                 } else if (attr.is(OperationalAttributes.PASSWORD_NAME)) {
-                    password = Utilities.getPlainPassword(
-                            (GuardedString) attr.getValue().get(0));
+                    password = Utilities.getPlainPassword((GuardedString) attr.getValue().get(0));
                 } else if (attr.is(OperationalAttributes.ENABLE_NAME)) {
-                    status = Boolean.parseBoolean(
-                            attr.getValue().get(0).toString());
+                    status = Boolean.parseBoolean(attr.getValue().get(0).toString());
                 } else if (attr.is(configuration.getCommentAttribute())) {
                     comment = attr.getValue().get(0).toString();
                 } else if (attr.is(configuration.getShellAttribute())) {
@@ -120,8 +114,11 @@ public class UnixUpdate {
                     homeDirectory = (String) attr.getValue().get(0).toString();
                 }
             }
-            unixConnection.execute(UnixConnector.getCommandGenerator().updateUser(uid.getUidValue(), newUserName, password,
-                    status, comment, shell, homeDirectory));
+            unixConnection.execute(UnixConnector.getCommandGenerator().updateUser(uid.getUidValue(), newUserName,
+                    password, status, comment, shell, homeDirectory));
+//            unixConnection.execute("mv /home/" + uid.getUidValue() + " /home/" + newUserName);
+            unixConnection.
+                    execute(UnixConnector.getCommandGenerator().moveHomeDirectory(uid.getUidValue(), newUserName));
             if (!status) {
                 unixConnection.execute(UnixConnector.getCommandGenerator().lockUser(uid.getUidValue()));
             } else {
@@ -134,8 +131,7 @@ public class UnixUpdate {
         } else if (objectClass.equals(ObjectClass.GROUP)) {
             if (!EvaluateCommandsResultOutput.evaluateUserOrGroupExists(
                     unixConnection.execute(UnixConnector.getCommandGenerator().groupExists(newUserName)))) {
-                throw new ConnectorException(
-                        "Group do not exists");
+                throw new ConnectorException("Group do not exists");
             }
             unixConnection.execute(UnixConnector.getCommandGenerator().updateGroup(uid.getUidValue(), newUserName));
         }

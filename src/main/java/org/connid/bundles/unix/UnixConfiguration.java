@@ -34,17 +34,29 @@ import org.identityconnectors.framework.spi.ConfigurationProperty;
 public class UnixConfiguration extends AbstractConfiguration {
 
     private String hostname = "";
+
     private int port = 0;
+
     private String admin = "";
+
     private GuardedString password = null;
+
     private boolean createHomeDirectory = false;
+
     private boolean deleteHomeDirectory = false;
+
     private String baseHomeDirectory = "";
+
     private String shell = "";
+
     private boolean root = false;
+
     private GuardedString sudoPassword = null;
+
     private String commentAttribute = "";
+
     private String shellAttribute = "";
+
     private String homeDirectoryAttribute = "";
 
     @ConfigurationProperty(displayMessageKey = "unix.admin.display",
@@ -182,23 +194,19 @@ public class UnixConfiguration extends AbstractConfiguration {
     @Override
     public final void validate() {
         if (StringUtil.isBlank(admin)) {
-            throw new ConfigurationException(
-                    "Unix admin username must not be blank!");
+            throw new ConfigurationException("Unix admin username must not be blank!");
         }
         if (StringUtil.isBlank(hostname)) {
-            throw new ConfigurationException(
-                    "Unix hostname must not be blank!");
+            throw new ConfigurationException("Unix hostname must not be blank!");
         }
         if (StringUtil.isBlank(password.toString())) {
-            throw new ConfigurationException(
-                    "Unix admin password must not be blank!");
+            throw new ConfigurationException("Unix admin password must not be blank!");
         }
         if (StringUtil.isBlank(String.valueOf(port))) {
-            port = Constants.getSshDefaultPort();
+            port = Constants.SSH_DEFAULT_PORT;
         }
-        if (port < 0 && port <= Constants.getUnixLastPort()) {
-            throw new ConfigurationException(
-                    "Unix ssh port range: 0 - 65535");
+        if (port < 0 && port <= Constants.UNIX_LAST_PORT) {
+            throw new ConfigurationException("Unix ssh port range: 0 - 65535");
         }
         if (StringUtil.isBlank(baseHomeDirectory)) {
             baseHomeDirectory = DefaultProperties.UNIX_USER_HOMEDIRECTORY;
@@ -227,8 +235,7 @@ public class UnixConfiguration extends AbstractConfiguration {
 
         }
         if ((!root) && (StringUtil.isBlank(sudoPassword.toString()))) {
-            throw new ConfigurationException(
-                    "Unix connector needs sudo password or root password");
+            throw new ConfigurationException("Unix connector needs sudo password or root password");
         }
     }
 }

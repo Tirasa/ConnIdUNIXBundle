@@ -25,19 +25,12 @@ package org.connid.bundles.unix.utilities;
 
 public class Constants {
 
-    private static int UNIX_LAST_PORT = 65535;
-    private static int SSH_DEFAULT_PORT = 22;
-    private static String INACTIVE_DATE = "2012/01/01";
+    public static int UNIX_LAST_PORT = 65535;
 
-    public static int getUnixLastPort() {
-        return UNIX_LAST_PORT;
-    }
+    public static int SSH_DEFAULT_PORT = 22;
 
-    public static int getSshDefaultPort() {
-        return SSH_DEFAULT_PORT;
-    }
-    
-    public static String getInactiveDate() {
-        return INACTIVE_DATE;
-    }
+    public static String INACTIVE_DATE = "2012/01/01";
+
+    public static final String STRICT_HOST_KEY_CHECKING = "StrictHostKeyChecking";
+
 }

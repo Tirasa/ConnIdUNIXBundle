@@ -29,6 +29,7 @@ import org.connid.bundles.unix.UnixConfiguration;
 import org.connid.bundles.unix.UnixConnection;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+
 public class UnixTest {
 
     private static final Log LOG = Log.getLog(UnixTest.class);

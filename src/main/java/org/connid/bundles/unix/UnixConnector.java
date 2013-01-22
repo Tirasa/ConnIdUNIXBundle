@@ -26,7 +26,6 @@ package org.connid.bundles.unix;
 import com.jcraft.jsch.JSchException;
 import java.io.IOException;
 import java.util.Set;
-import javax.swing.text.html.HTMLDocument;
 import org.connid.bundles.unix.methods.UnixAuthenticate;
 import org.connid.bundles.unix.methods.UnixCreate;
 import org.connid.bundles.unix.methods.UnixDelete;

@@ -84,7 +84,7 @@ public class UnixUpdateUserTest extends SharedTestMethods {
         final Uid authUid = connector.authenticate(ObjectClass.ACCOUNT, newName.getNameValue(),
                 attrs.getNewGuardedPassword(), null);
         Assert.assertEquals(newName.getNameValue(), authUid.getUidValue());
-
+        newAccount = new Uid(newName.getNameValue());
     }
 
     @Test

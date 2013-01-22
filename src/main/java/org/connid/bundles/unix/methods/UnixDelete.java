@@ -28,7 +28,6 @@ import java.io.IOException;
 import org.connid.bundles.unix.UnixConfiguration;
 import org.connid.bundles.unix.UnixConnection;
 import org.connid.bundles.unix.UnixConnector;
-import org.connid.bundles.unix.sshmanagement.CommandGenerator;
 import org.connid.bundles.unix.utilities.EvaluateCommandsResultOutput;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
