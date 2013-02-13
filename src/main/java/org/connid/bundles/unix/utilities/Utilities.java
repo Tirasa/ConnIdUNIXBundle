@@ -28,15 +28,15 @@ import org.identityconnectors.common.security.GuardedString;
 public class Utilities {
 
     public static String getPlainPassword(final GuardedString password) {
-        final StringBuffer buf = new StringBuffer();
+        final StringBuilder builder = new StringBuilder();
 
         password.access(new GuardedString.Accessor() {
 
             @Override
             public void access(final char[] clearChars) {
-                buf.append(clearChars);
+                builder.append(clearChars);
             }
         });
-        return buf.toString();
+        return builder.toString();
     }
 }
