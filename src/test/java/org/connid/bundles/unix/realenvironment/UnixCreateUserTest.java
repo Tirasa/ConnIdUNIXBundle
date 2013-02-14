@@ -23,8 +23,10 @@
  */
 package org.connid.bundles.unix.realenvironment;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import org.connid.bundles.unix.UnixConnector;
 import org.connid.bundles.unix.search.Operand;
@@ -34,15 +36,17 @@ import org.connid.bundles.unix.utilities.SharedTestMethods;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.*;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 public class UnixCreateUserTest extends SharedTestMethods {
 
     private UnixConnector connector = null;
+
     private Name name = null;
+
     private Uid newAccount = null;
+
     private AttributesTestValue attrs = null;
 
     @Before
@@ -58,7 +62,7 @@ public class UnixCreateUserTest extends SharedTestMethods {
         boolean userExists = false;
         newAccount = connector.create(ObjectClass.ACCOUNT,
                 createSetOfAttributes(name, attrs.getPassword(), true), null);
-        Assert.assertEquals(name.getNameValue(), newAccount.getUidValue());
+        assertEquals(name.getNameValue(), newAccount.getUidValue());
         try {
             connector.create(ObjectClass.ACCOUNT,
                     createSetOfAttributes(name, attrs.getPassword(), true),
@@ -66,7 +70,7 @@ public class UnixCreateUserTest extends SharedTestMethods {
         } catch (Exception e) {
             userExists = true;
         }
-        Assert.assertTrue(userExists);
+        assertTrue(userExists);
     }
 
     @Test(expected = ConnectorException.class)
@@ -81,24 +85,19 @@ public class UnixCreateUserTest extends SharedTestMethods {
     public final void createUnLockedUser() {
         newAccount = connector.create(ObjectClass.ACCOUNT,
                 createSetOfAttributes(name, attrs.getPassword(), true), null);
-        Assert.assertEquals(name.getNameValue(), newAccount.getUidValue());
-        final Set actual = new HashSet();
-        connector.executeQuery(ObjectClass.ACCOUNT,
-                new Operand(
-                Operator.EQ, Uid.NAME, newAccount.getUidValue(), false),
+        assertEquals(name.getNameValue(), newAccount.getUidValue());
+        final Set<ConnectorObject> actual = new HashSet<ConnectorObject>();
+        connector.executeQuery(ObjectClass.ACCOUNT, new Operand(Operator.EQ, Uid.NAME, newAccount.getUidValue(), false),
                 new ResultsHandler() {
 
                     @Override
-                    public boolean handle(final ConnectorObject co) {
-                        actual.add(co);
+                    public boolean handle(final ConnectorObject connObj) {
+                        actual.add(connObj);
                         return true;
                     }
                 }, null);
-        for (Iterator it = actual.iterator(); it.hasNext();) {
-            Object object = it.next();
-            ConnectorObject co = (ConnectorObject) object;
-            Assert.assertEquals(name.getNameValue(),
-                    co.getName().getNameValue());
+        for (ConnectorObject connObj : actual) {
+            assertEquals(name.getNameValue(), connObj.getName().getNameValue());
         }
         connector.authenticate(ObjectClass.ACCOUNT, newAccount.getUidValue(),
                 attrs.getGuardedPassword(), null);

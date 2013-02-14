@@ -23,8 +23,10 @@
  */
 package org.connid.bundles.unix.realenvironment;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import org.connid.bundles.unix.UnixConnector;
 import org.connid.bundles.unix.search.Operand;
@@ -34,7 +36,6 @@ import org.connid.bundles.unix.utilities.SharedTestMethods;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.*;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -61,24 +62,22 @@ public class UnixExecuteQueryTest extends SharedTestMethods {
     public final void searchUser() {
         newAccount = connector.create(ObjectClass.ACCOUNT,
                 createSetOfAttributes(name, attrs.getPassword(), true), null);
-        Assert.assertEquals(name.getNameValue(), newAccount.getUidValue());
-        final Set actual = new HashSet();
+        assertEquals(name.getNameValue(), newAccount.getUidValue());
+
+        final Set<ConnectorObject> actual = new HashSet<ConnectorObject>();
         connector.executeQuery(ObjectClass.ACCOUNT,
                 new Operand(
                 Operator.EQ, Uid.NAME, newAccount.getUidValue(), false),
                 new ResultsHandler() {
 
                     @Override
-                    public boolean handle(final ConnectorObject co) {
-                        actual.add(co);
+                    public boolean handle(final ConnectorObject connObj) {
+                        actual.add(connObj);
                         return true;
                     }
                 }, null);
-        for (Iterator it = actual.iterator(); it.hasNext();) {
-            Object object = it.next();
-            ConnectorObject co = (ConnectorObject) object;
-            Assert.assertEquals(name.getNameValue(),
-                    co.getName().getNameValue());
+        for (ConnectorObject connObj : actual) {
+            assertEquals(name.getNameValue(), connObj.getName().getNameValue());
         }
         connector.delete(ObjectClass.ACCOUNT, newAccount, null);
     }
@@ -87,19 +86,19 @@ public class UnixExecuteQueryTest extends SharedTestMethods {
     public final void searchStartsWithAttribute() {
         newAccount = connector.create(ObjectClass.ACCOUNT,
                 createSetOfAttributes(name, attrs.getPassword(), true), null);
-        Assert.assertEquals(name.getNameValue(), newAccount.getUidValue());
-        final Set actual = new HashSet();
-        connector.executeQuery(ObjectClass.ACCOUNT,
-                new Operand(Operator.SW, Uid.NAME, "crea", false),
+        assertEquals(name.getNameValue(), newAccount.getUidValue());
+
+        final Set<ConnectorObject> actual = new HashSet<ConnectorObject>();
+        connector.executeQuery(ObjectClass.ACCOUNT, new Operand(Operator.SW, Uid.NAME, "crea", false),
                 new ResultsHandler() {
 
                     @Override
-                    public boolean handle(final ConnectorObject co) {
-                        actual.add(co);
+                    public boolean handle(final ConnectorObject connObj) {
+                        actual.add(connObj);
                         return true;
                     }
                 }, null);
-        Assert.assertEquals(1, actual.size());
+        assertEquals(1, actual.size());
         connector.delete(ObjectClass.ACCOUNT, newAccount, null);
     }
 
@@ -107,8 +106,8 @@ public class UnixExecuteQueryTest extends SharedTestMethods {
     public final void searchEndsWithAttribute() {
         newAccount = connector.create(ObjectClass.ACCOUNT,
                 createSetOfAttributes(name, attrs.getPassword(), true), null);
-        Assert.assertEquals(name.getNameValue(), newAccount.getUidValue());
-        final Set actual = new HashSet();
+        assertEquals(name.getNameValue(), newAccount.getUidValue());
+        final Set<ConnectorObject> actual = new HashSet<ConnectorObject>();
         connector.executeQuery(ObjectClass.ACCOUNT,
                 new Operand(Operator.EW, Uid.NAME,
                 newAccount.getUidValue().substring(
@@ -117,12 +116,12 @@ public class UnixExecuteQueryTest extends SharedTestMethods {
                 new ResultsHandler() {
 
                     @Override
-                    public boolean handle(final ConnectorObject co) {
-                        actual.add(co);
+                    public boolean handle(final ConnectorObject connObj) {
+                        actual.add(connObj);
                         return true;
                     }
                 }, null);
-        Assert.assertEquals(1, actual.size());
+        assertEquals(1, actual.size());
         connector.delete(ObjectClass.ACCOUNT, newAccount, null);
     }
 
@@ -130,19 +129,18 @@ public class UnixExecuteQueryTest extends SharedTestMethods {
     public final void searchContainsAttribute() {
         newAccount = connector.create(ObjectClass.ACCOUNT,
                 createSetOfAttributes(name, attrs.getPassword(), true), null);
-        Assert.assertEquals(name.getNameValue(), newAccount.getUidValue());
-        final Set actual = new HashSet();
-        connector.executeQuery(ObjectClass.ACCOUNT,
-                new Operand(Operator.C, Uid.NAME, "test", false),
+        assertEquals(name.getNameValue(), newAccount.getUidValue());
+        final Set<ConnectorObject> actual = new HashSet<ConnectorObject>();
+        connector.executeQuery(ObjectClass.ACCOUNT, new Operand(Operator.C, Uid.NAME, "test", false),
                 new ResultsHandler() {
 
                     @Override
-                    public boolean handle(final ConnectorObject co) {
-                        actual.add(co);
+                    public boolean handle(final ConnectorObject connObj) {
+                        actual.add(connObj);
                         return true;
                     }
                 }, null);
-        Assert.assertEquals(1, actual.size());
+        assertEquals(1, actual.size());
         connector.delete(ObjectClass.ACCOUNT, newAccount, null);
     }
 
@@ -151,33 +149,30 @@ public class UnixExecuteQueryTest extends SharedTestMethods {
     public final void searchNotEqualsAttribute() {
         newAccount = connector.create(ObjectClass.ACCOUNT,
                 createSetOfAttributes(name, attrs.getPassword(), true), null);
-        Assert.assertEquals(name.getNameValue(), newAccount.getUidValue());
-        final Set actual = new HashSet();
-        connector.executeQuery(ObjectClass.ACCOUNT,
-                new Operand(Operator.EQ, Uid.NAME, "test", true),
+        assertEquals(name.getNameValue(), newAccount.getUidValue());
+        final Set<ConnectorObject> actual = new HashSet<ConnectorObject>();
+        connector.executeQuery(ObjectClass.ACCOUNT, new Operand(Operator.EQ, Uid.NAME, "test", true),
                 new ResultsHandler() {
 
                     @Override
-                    public boolean handle(final ConnectorObject co) {
-                        actual.add(co);
+                    public boolean handle(final ConnectorObject connObj) {
+                        actual.add(connObj);
                         return true;
                     }
                 }, null);
-        Assert.assertTrue(actual.size() > 1);
+        assertTrue(actual.size() > 1);
         connector.delete(ObjectClass.ACCOUNT, newAccount, null);
     }
 
     @Test(expected = ConnectorException.class)
     public final void searchNotExistsUser() {
-        final Set actual = new HashSet();
-        connector.executeQuery(ObjectClass.ACCOUNT,
-                new Operand(
-                Operator.EQ, Uid.NAME, attrs.getWrongUsername(), false),
+        final Set<ConnectorObject> actual = new HashSet<ConnectorObject>();
+        connector.executeQuery(ObjectClass.ACCOUNT, new Operand(Operator.EQ, Uid.NAME, attrs.getWrongUsername(), false),
                 new ResultsHandler() {
 
                     @Override
-                    public boolean handle(final ConnectorObject co) {
-                        actual.add(co);
+                    public boolean handle(final ConnectorObject connObj) {
+                        actual.add(connObj);
                         return true;
                     }
                 }, null);
@@ -197,19 +192,18 @@ public class UnixExecuteQueryTest extends SharedTestMethods {
         Name name4 = new Name(attrs.getUsername());
         Uid newAccount4 = connector.create(ObjectClass.ACCOUNT,
                 createSetOfAttributes(name4, attrs.getPassword(), true), null);
-        final Set actual = new HashSet();
+        final Set<ConnectorObject> actual = new HashSet<ConnectorObject>();
         connector.executeQuery(ObjectClass.ACCOUNT,
-                new Operand(
-                Operator.EQ, "shell", "/bin/rbash", false),
+                new Operand(Operator.EQ, "shell", "/bin/rbash", false),
                 new ResultsHandler() {
 
                     @Override
-                    public boolean handle(final ConnectorObject co) {
-                        actual.add(co);
+                    public boolean handle(final ConnectorObject connObj) {
+                        actual.add(connObj);
                         return true;
                     }
                 }, null);
-        Assert.assertEquals(4, actual.size());
+        assertEquals(4, actual.size());
         connector.delete(ObjectClass.ACCOUNT, newAccount1, null);
         connector.delete(ObjectClass.ACCOUNT, newAccount2, null);
         connector.delete(ObjectClass.ACCOUNT, newAccount3, null);
@@ -220,11 +214,9 @@ public class UnixExecuteQueryTest extends SharedTestMethods {
     public final void searchGroup() {
         newAccount = connector.create(ObjectClass.GROUP,
                 createSetOfAttributes(name, attrs.getPassword(), true), null);
-        Assert.assertEquals(name.getNameValue(), newAccount.getUidValue());
-        final Set actual = new HashSet();
-        connector.executeQuery(ObjectClass.GROUP,
-                new Operand(
-                Operator.EQ, Uid.NAME, newAccount.getUidValue(), false),
+        assertEquals(name.getNameValue(), newAccount.getUidValue());
+        final Set<ConnectorObject> actual = new HashSet<ConnectorObject>();
+        connector.executeQuery(ObjectClass.GROUP, new Operand(Operator.EQ, Uid.NAME, newAccount.getUidValue(), false),
                 new ResultsHandler() {
 
                     @Override
@@ -233,24 +225,21 @@ public class UnixExecuteQueryTest extends SharedTestMethods {
                         return true;
                     }
                 }, null);
-        for (Iterator it = actual.iterator(); it.hasNext();) {
-            Object object = it.next();
-            ConnectorObject co = (ConnectorObject) object;
-            Assert.assertEquals(name.getNameValue(),
-                    co.getName().getNameValue());
+        for (ConnectorObject connObj : actual) {
+            assertEquals(name.getNameValue(), connObj.getName().getNameValue());
         }
         connector.delete(ObjectClass.GROUP, newAccount, null);
     }
 
     @Test(expected = ConnectorException.class)
     public void executeQueryWithWrongObjectClass() {
-        final Set actual = new HashSet();
+        final Set<ConnectorObject> actual = new HashSet<ConnectorObject>();
         connector.executeQuery(attrs.getWrongObjectClass(), null,
                 new ResultsHandler() {
 
                     @Override
-                    public boolean handle(final ConnectorObject co) {
-                        actual.add(co);
+                    public boolean handle(final ConnectorObject connObj) {
+                        actual.add(connObj);
                         return true;
                     }
                 }, null);
