@@ -3,6 +3,11 @@ ConnIdUNIXBundle
 
 The UNIX bundle is part of the [ConnId](http://connid.tirasa.net) project.
 
+<a href="https://travis-ci.org/Tirasa/ConnIdUNIXBundle"><img src="https://api.travis-ci.org/Tirasa/ConnIdUNIXBundle.png"/></a>
+<a href="https://maven-badges.herokuapp.com/maven-central/org.connid.bundles/org.connid.bundles.unix">
+  <img src="https://maven-badges.herokuapp.com/maven-central/org.connid.bundles/org.connid.bundles.unix/badge.svg"/>
+</a>
+
 ## How to get it
 
 ### Maven
@@ -25,4 +30,3 @@ Available from [releases](https://github.com/Tirasa/ConnIdUNIXBundle/releases).
 
  * [wiki](https://connid.atlassian.net/wiki/display/BASE/UNIX)
  * [issues](https://connid.atlassian.net/browse/UNIX)
- * <a href="https://travis-ci.org/Tirasa/ConnIdUNIXBundle"><img src="https://api.travis-ci.org/Tirasa/ConnIdUNIXBundle.png"/></a>
