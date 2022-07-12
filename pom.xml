@@ -80,7 +80,7 @@
 
   <properties>
     <base.version>1.3.3.1</base.version>
-    <jsch.version>0.1.51</jsch.version>
+    <jsch.version>0.1.54</jsch.version>
         
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
